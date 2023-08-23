@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sportbot-396814",
+  "private_key_id": "5f4c6812d902b865578d6eb310735386c919b677",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCiHdvfavNMW9Cs\nVpu0q6PG+VISz20WK2Q1w9eFckvvCUS3NFNvP17GyJ+IgXostcDEDvRDhdYyXZsA\n+u+I6KK2j6wqAnQwTAb1txCVk/7EeTBUY8gOTrMyE/z/76AZBr5IXTi2akRGtxOJ\nWID09UgbsnCJAuh2NRUM1EFMq7qrdeLKt5Ek3NmSV6dpkPcTvtMBimCDWCM0MuxQ\n04EOQviI2eJiJLbp5TlitzxmXySRbPZ0SHQiKVGzV+hXH71dWfE+Gu5D70fzfLSd\n4+rOjdPF39we8hIXKR/fL6wzP4aIbMwXMdxCOUxz3EnhJb0Am4rDTGly36Ir69HL\nl0CJL4pHAgMBAAECggEARwgELakjvyI/lTNBd/D4ipb1Mg62gk8y0ifkB7FjufF6\nrTb9E7JVaY2/8MSibnKYao8O0YMTre+7mbtZNsiPeqQK0EFQ/VRifEjguFkm+JkM\n5vztS++Jrnh5kv5ATJbaysQltC9tiPpwUe54WlwaYyBVFIM0rY5mkb9yeRCJctQ6\nq9C2bKVYCJvNSvTj7NzLjUvX7pV92KPmzOa7BaB6jRY6u5wxRachYFRK6VD8xyWm\nnDtj2jsL/lAmpeySkEaOK3Pal4eBITJ28JtvV3arOejifAcudZSnOUcF0EzmWrTH\n4J/eOKl019uXrCjw6bFxD2KwkcvVWZsx6H45tozrQQKBgQDL2l9vOIoK0a+lhy2y\n7VSrePVAq41oHBjId8FIu3TV02N6sB6rQFevnhgdOkZ5q+9F2PcCfZuIUePOIUYD\nIidECbmkwEj0v3U/hHOsgqGjaBeB41/75RfwNUBUMqu6eYLRNF/if7pac0I1N8FE\niJ8hRVIFsgyA2ejpnzwRyFN05wKBgQDLllCtYWQbISfn3O4V+v3ANJ2Zx//TcL1B\n7fj7VNVa9W5Y6lm7zSOG+TcdaRhWPItJp677QJaumKDf93gHxKI1793SvhaGnq9v\nuQ2I4c4MpZo9Ukxo+a+30T+vziD2plHT97Fmnlj9IneDAeEYdIqjc4yt+hMWJUv4\nqQZxGi8zoQKBgDO9d1+JYDAizIwc5VJ2vnjPOKBzam60Qu4OxzYorhzfjG5FaWNZ\n72eZntE8S0rygsadrQQq0WEmN8XH2DdPYdv5A+93Bo1oUuAORDXS6ifJcb378g7D\nNPI48dztB31K/hMPUg7xEGGIw5MyVZGJg6o0J/9eE6JYrK8vRVXWHKidAoGBAIqg\n1lrZYGMg1p2J0Q1ilXtV2KMojskZkaXdN5dcktOXIAanvWamLzTvalo6f/nozCfh\naMNpnbFR+OnJBxCzEomLxg6Epa4RTADVj6PPrpDqCvcKnUE2FDMk5yr9P3D0m++s\nUD5CQPJNj/fDRdVzNhxKyFaHXIvN5cdywRIu9ElBAoGBAL7oBKCfaSmgccIZaSDK\nuS//jTx7kFbl6G91Gob8E63e7tkw4s22PNheto7+7KZazPqgYTorba+ygoJuh8HM\nxdmEwg2N+d2y7Eyy6kuq8zKEBAPcpGNqZO/y3tsrwaG0cr+1f02zyyMrDdwq7VGY\nSQ5Wb+uN0fmJXOm4G+o+GrZP\n-----END PRIVATE KEY-----\n",
+  "client_email": "sportbot@sportbot-396814.iam.gserviceaccount.com",
+  "client_id": "116301065003847990493",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sportbot%40sportbot-396814.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
