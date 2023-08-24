@@ -32,57 +32,58 @@ async def send_welcome(message: types.Message):
 async def search_author(message: types.Message):
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
-    if datetime.utcnow().time().hour + int(timezone[0]) <= 12:
-        cursor.execute(f"SELECT date FROM tech_info")
-        temp = cursor.fetchone()
-        if datetime.today().date() != temp[0]:
-            a = datetime.today().date() - temp[0]
-            cursor.execute(f"UPDATE tech_info SET str_id=str_id+{a.days}, date='{datetime.today().date()}'")
-            connect.commit()
-        cursor.execute("SELECT str_id FROM tech_info")
-        str_id = cursor.fetchone()
-        cursor.execute(f"SELECT gs_id FROM users WHERE id={message.from_user.id}")
-        gs_id = cursor.fetchone()
-        if gs_id[0] is None:
-            cursor.execute(f"SELECT gs_id FROM users WHERE gs_id is not NULL ORDER BY id DESC")
-            maximum = cursor.fetchone()[0]
-            if maximum == "Z" or len(maximum) == 2:
-                if maximum[1] == "Z":
-                    maximum = chr(ord(maximum[0]) + 1) + chr(65)
-                elif len(maximum) == 2:
-                    maximum = chr(ord(maximum[0])) + chr(ord(maximum[1]) + 1)
-                else:
-                    maximum = chr(65) + chr(65)
+    #if datetime.utcnow().time().hour + int(timezone[0]) <= 12:
+    cursor.execute(f"SELECT date FROM tech_info")
+    temp = cursor.fetchone()
+    if datetime.today().date() != temp[0]:
+        a = datetime.today().date() - temp[0]
+        cursor.execute(f"UPDATE tech_info SET str_id=str_id+{a.days}, date='{datetime.today().date()}'")
+        connect.commit()
+    cursor.execute("SELECT str_id FROM tech_info")
+    str_id = cursor.fetchone()
+    cursor.execute(f"SELECT gs_id FROM users WHERE tg_id={message.from_user.id}")
+    gs_id = cursor.fetchone()
+    if gs_id[0] is None:
+        cursor.execute(f"SELECT gs_id FROM users WHERE gs_id is not NULL ORDER BY id DESC")
+        maximum = cursor.fetchone()[0]
+        if maximum == "Z" or len(maximum) == 2:
+            if maximum[1] == "Z":
+                maximum = chr(ord(maximum[0]) + 1) + chr(65)
+            elif len(maximum) == 2:
+                maximum = chr(ord(maximum[0])) + chr(ord(maximum[1]) + 1)
             else:
-                maximum = chr(ord(maximum[0]) + 1)
-            cursor.execute(f"UPDATE users SET gs_id={maximum} WHERE tg_id={message.from_user.id}")
-            connect.commit()
-            request = {
-                'requests': [
-                    {
-                        'appendDimension': {
-                            'sheetId': 867585341,
-                            'dimension': 'COLUMNS',
-                            'length': 1
-                        }
-                    }
-                ]
-            }
-            rs = service.spreadsheets().batchUpdate(spreadsheetId=sp_id, body=request).execute()
-            cursor.execute(f"SELECT name FROM users WHERE tg_id={message.from_user.id}")
-            name = cursor.fetchone()[0]
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
-                "valueInputOption": "RAW",
-                "data": [
-                    {"range": f"Календарь!{maximum}3", 'values': [[name]]},
-                    {"range": f"Календарь!{maximum}{str_id[0]}", 'values': [["да"]]}]}).execute()
+                maximum = chr(65) + chr(65)
         else:
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
-                "valueInputOption": "RAW",
-                "data": [
-                    {"range": f"Календарь!{gs_id[0]}{str_id[0]}", 'values': [["да"]]}]}).execute()
+            maximum = chr(ord(maximum[0]) + 1)
+        cursor.execute(f"UPDATE users SET gs_id='{maximum}' WHERE tg_id={message.from_user.id}")
+        connect.commit()
+        request = {
+            'requests': [
+                {
+                    'appendDimension': {
+                        'sheetId': 867585341,
+                        'dimension': 'COLUMNS',
+                        'length': 1
+                    }
+                }
+            ]
+        }
+        rs = service.spreadsheets().batchUpdate(spreadsheetId=sp_id, body=request).execute()
+        cursor.execute(f"SELECT id,name,nickname,tg_url,timezone,date_start FROM users WHERE tg_id={message.from_user.id}")
+        info = cursor.fetchone()
+        results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+            "valueInputOption": "RAW",
+            "data": [
+                {"range": f"Календарь!{maximum}2:{maximum}6", 'values': [[info[0]], [info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
+                {"range": f"Календарь!{maximum}7", 'values': [[f"{info[5]}"]]},
+                {"range": f"Календарь!{maximum}{str_id[0]}", 'values': [["да"]]}]}).execute()
     else:
-        await bot.send_message(message.chat.id, "Извините, вы опоздали")
+        results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+            "valueInputOption": "RAW",
+            "data": [
+                {"range": f"Календарь!{gs_id[0]}{str_id[0]}", 'values': [["да"]]}]}).execute()
+    #else:
+        #await bot.send_message(message.chat.id, "Извините, вы опоздали", reply_to_message_id=message.message_thread_id)
 
 
 @dp.message_handler(content_types=[ContentType.FORUM_TOPIC_CREATED])
@@ -93,6 +94,11 @@ async def topic_created(message: types.Message):
     except Exception as e:
         connect.rollback()
         await message.answer(f'При регистрации топика произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')
+
+
+@dp.message_handler(content_types="text")
+async def test(message: types.Message):
+    print(message.from_user.id)
 
 
 if __name__ == '__main__':
