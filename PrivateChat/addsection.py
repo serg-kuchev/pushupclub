@@ -13,8 +13,8 @@ async def section_register(callback: types.CallbackQuery):
     await callback.message.delete()
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     cursor.execute(f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={callback.message.chat.id})")
-    for activity in cursor.fetchone():
-        keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity}", callback_data=f"section_register {activity}")])
+    for activity in cursor.fetchall():
+        keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity[0]}", callback_data=f"section_register {activity[0]}")])
     keyboard.inline_keyboard.append([types.InlineKeyboardButton('Вернуться в главное меню', callback_data='section_register_back')])
     await callback.message.answer('Выберите секцию, на которую хотите записаться', reply_markup=keyboard)
 

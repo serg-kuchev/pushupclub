@@ -15,4 +15,4 @@ async def private_start(message: types.Message):
         keyboard = types.InlineKeyboardMarkup(row_width=1, inline_keyboard=[
             [types.InlineKeyboardButton('Да', callback_data='register')]
         ])
-        await message.answer('Привет, хочешь ли ты зарегистрироваться в проекте?', reply_markup=keyboard)
+        await message.answer('Привет, хочешь ли ты зарегистрироваться в проекте?💪', reply_markup=keyboard)

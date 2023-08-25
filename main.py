@@ -12,7 +12,6 @@ import re
 
 # AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
 logging.basicConfig(level=logging.INFO)
-sp_id = "1KAY73XEKsV4H-TL4jPRqAR6CIm5rIR79ZNkeJEpn0qk"
 CREDENTIALS_FILE = 'sportbot-396814-5f4c6812d902.json'
 credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d902.json', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
 service = build('sheets', 'v4', credentials=credentials)
@@ -33,6 +32,13 @@ async def set_activity(message: types.Message):
         await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
                              "https://t.me/Testing_Enot_bot")
         return
+    cursor.execute(f"SELECT activity_type FROM activities WHERE thread_id={message.message_thread_id}")
+    activity = cursor.fetchone()[0]
+    cursor.execute(f"SELECT * FROM user_activities WHERE user_id={message.from_user.id} AND activity='{activity}'")
+    if not cursor.fetchone():
+        await message.answer("Вы не зарегистрированы в секции, для регистрации пройдите регистрацию по ссылке ниже\n"
+                             "https://t.me/Testing_Enot_bot")
+        return
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
     string_index = 0
@@ -40,15 +46,15 @@ async def set_activity(message: types.Message):
         string_index += 1
     elif datetime.utcnow().time().hour + int(timezone[0]) < 0:
         string_index -= 1
-    cursor.execute(f"SELECT activity_type, gid, str_id FROM activities WHERE thread_id={message.message_thread_id}")
+    cursor.execute(f"SELECT activity_type, gid, str_id, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
     activ = cursor.fetchone()
     if activ:
         cursor.execute(f"SELECT gs_id FROM user_activities WHERE user_id={message.from_user.id} and activity='{activ[0]}'")
         gs_id = cursor.fetchone()
         match = re.search(r'#(\d+)', message.caption)
         number = int(match.group(1))
-        if gs_id:
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+        if gs_id[0]:
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                 "valueInputOption": "RAW",
                 "data": [
                     {"range": f"Календарь!{gs_id[0]}{activ[2]+string_index}", 'values': [[number]]}]}).execute()
@@ -83,15 +89,15 @@ async def set_activity(message: types.Message):
                     }
                 ]
             }
-            rs = service.spreadsheets().batchUpdate(spreadsheetId=sp_id, body=request).execute()
+            rs = service.spreadsheets().batchUpdate(spreadsheetId=activ[3], body=request).execute()
             cursor.execute(
                 f"SELECT id,name,nickname,tg_url,timezone,date_start FROM users WHERE tg_id={message.from_user.id}")
             info = cursor.fetchone()
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                 "valueInputOption": "RAW",
                 "data": [
-                    {"range": f"Календарь!{temp}2:{temp}6",
-                     'values': [[info[0]], [info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
+                    {"range": f"Календарь!{temp}3:{temp}6",
+                     'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
                     {"range": f"Календарь!{temp}7", 'values': [[f"{info[5]}"]]},
                     {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 

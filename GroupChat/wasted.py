@@ -16,7 +16,6 @@ async def print_wasted():
             w1 = result.get('values')[0]
             cursor.execute(f"SELECT str_id FROM activities WHERE activity_type='{activity[0]}'")
             current_str = cursor.fetchone()[0]
-            print(current_str)
             result = service.spreadsheets().values().get(spreadsheetId=activity[2],
                                                          range=f"Календарь!{maximum[i][0]}{current_str - 1}").execute()
             try:
@@ -35,4 +34,3 @@ async def increment_activity_str():
     for activity in activities:
         cursor.execute(f"UPDATE activities SET str_id = {activity[1] + 1} WHERE activity_type='{activity[0]}'")
         connect.commit()
-    print(activities)

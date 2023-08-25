@@ -15,7 +15,7 @@ async def topic_created(message: types.Message):
             [types.InlineKeyboardButton(f"Добавить таблицу {topic_name}", callback_data=f"accept_activity {topic_name} {thread_id}")],
             [types.InlineKeyboardButton(f"Отменить создание таблицы", callback_data=f"decline_activity {topic_name} {thread_id}")]
         ])
-        await bot.send_message(503889403, f"В беседе был создан новый топик с названием {topic_name}\n", reply_markup=keyboard)
+        await bot.send_message(623323275, f"В беседе был создан новый топик с названием {topic_name}\n", reply_markup=keyboard)
     except Exception as e:
         connect.rollback()
         await message.answer(f'При регистрации топика произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')

@@ -9,6 +9,7 @@ from datetime import date
 
 
 class Register(StatesGroup):
+    password = State()
     name = State()
     nickname = State()
     utc = State()
@@ -21,8 +22,19 @@ class EditTimezone(StatesGroup):
 @dp.callback_query_handler(Text(equals='register'))
 async def register(callback: types.CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=None)
-    await callback.message.answer('Введите ваше имя')
-    await Register.name.set()
+    await callback.message.answer('Введи пароль')
+    await Register.password.set()
+
+
+@dp.message_handler(state=Register.password)
+async def register_password(message: types.Message, state: FSMContext):
+    print(message.text)
+    if int(message.text) == 335577:
+        await Register.next()
+        await message.answer('Введи своё имя')
+    else:
+        await message.answer('Пароль неверен')
+        await state.finish()
 
 
 @dp.message_handler(state=Register.name)
@@ -52,7 +64,7 @@ async def register_utc(message: types.Message, state: FSMContext):
                 cursor.execute(f"INSERT INTO users(tg_id, name, nickname, timezone, tg_url, date_start) "
                                f"VALUES({message.chat.id},'{data['name']}','{data['nickname']}','{data['utc']}','{telegram}','{today.strftime('%d.%m.%y')}')")
                 connect.commit()
-                await message.answer("Вы успешно зарегистрировались. Для продолжения перейдите в основной чат!")
+                await message.answer("Ты успешно зарегистрировался. Для продолжения перейди в основной чат!")
             except Exception as e:
                 connect.rollback()
                 await message.answer('Что-то пошло не так в процессе регистрации. Обратитесь к администратору')
@@ -60,7 +72,7 @@ async def register_utc(message: types.Message, state: FSMContext):
         else:
             raise Exception('ex')
     except:
-        await message.answer('Вы ввели неверный формат UTC, попробуйте ещё раз')
+        await message.answer('Ты ввёл неверный формат UTC, попробуй ещё раз')
 
 
 @dp.callback_query_handler(Text(equals='change_timezone'))
@@ -73,18 +85,18 @@ async def change_timezone(callback: types.CallbackQuery):
 @dp.message_handler(state=EditTimezone.timezone)
 async def edit_timezone(message: types.Message, state: FSMContext):
     try:
-        if (int(message.text) and -12 <= int(message.text) <= 12 and (message.text[0] == '+' or '-')) or message.text == '0':
+        if check_timezone(message.text):
             async with state.proxy() as data:
                 data['utc'] = message.text
             try:
                 cursor.execute(f"UPDATE users SET timezone = '{data['utc']}' WHERE tg_id = {message.chat.id}")
                 connect.commit()
-                await message.answer("Вы успешно обновили часовой пояс. Для продолжения перейдите в основной чат!")
+                await message.answer("Ты успешно сменил часовой пояс. Для продолжения перейди в основной чат!")
             except:
                 connect.rollback()
-                await message.answer('Что-то пошло не так в процессе изменения часового пояса. Обратитесь к администратору')
+                await message.answer('Что-то пошло не так в процессе изменения часового пояса. Обратись к администратору')
             await state.finish()
         else:
             raise Exception('ex')
     except:
-        await message.answer('Вы ввели неверный формат UTC, попробуйте ещё раз')
+        await message.answer('Ты ввёл неверный формат UTC, попробуй ещё раз')
