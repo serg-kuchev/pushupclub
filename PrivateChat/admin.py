@@ -6,15 +6,9 @@ from dispatcher import dp
 
 
 class Activity(StatesGroup):
-    spreadsheet = State()
+    gid = State()
     sp_id = State()
-
-
-@dp.callback_query_handler(lambda c: c.data == 'add_new_activity')
-async def add_new_activity(callback: types.CallbackQuery):
-    await callback.message.delete()
-    await callback.message.answer('Предоставьте ссылку на таблицу')
-    await Activity.spreadsheet.set()
+    #begin_str = State()
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('decline_activity'))
@@ -33,15 +27,15 @@ async def decline_activity(callback: types.CallbackQuery):
 async def accept_activity(callback: types.CallbackQuery, state: FSMContext):
     activity = callback.data.split(' ')
     await state.update_data(activity_type=activity[1], thread_id=int(activity[2]))
-    await Activity.spreadsheet.set()
-    await callback.message.edit_text('Добавьте ссылку на таблицу для её регистрации')
+    await Activity.gid.set()
+    await callback.message.edit_text('Добавьте gid номер листа(располагается в самом конце)')
 
 
-@dp.message_handler(state=Activity.spreadsheet)
-async def activity_spreadsheet(message: types.Message, state: FSMContext):
-    await state.update_data(spreadsheet=message.text)
+@dp.message_handler(state=Activity.gid)
+async def activity_gid(message: types.Message, state: FSMContext):
+    await state.update_data(gid=message.text)
     await Activity.next()
-    await message.answer('Укажите номер столбца таблицы')
+    await message.answer('Укажите sp_id документа, который расположен в ссылке после /d/')
 
 
 @dp.message_handler(state=Activity.sp_id)
@@ -50,10 +44,27 @@ async def activity_type(message: types.Message, state: FSMContext):
     data = await state.get_data()
     await state.finish()
     try:
-        cursor.execute(f"UPDATE activities SET spreadsheet='{data['spreadsheet']}', sp_id='{data['sp_id']}' WHERE thread_id={data['thread_id']}")
+        cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id=8 WHERE thread_id={data['thread_id']}")
         connect.commit()
         await message.answer(f"Таблица {data['activity_type']} успешно создана")
     except Exception as e:
         print(e)
         connect.rollback()
         await message.answer(f'При создании таблицы произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')
+
+
+
+# mb future update
+# @dp.message_handler(state=Activity.begin_str)
+# async def activity_begin_str(message: types.Message, state: FSMContext):
+#     await state.update_data(begin_str=message.text)
+#     data = await state.get_data()
+#     await state.finish()
+#     try:
+#         cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id='{data['begin_str']}' WHERE thread_id={data['thread_id']}")
+#         connect.commit()
+#         await message.answer(f"Таблица {data['activity_type']} успешно создана")
+#     except Exception as e:
+#         print(e)
+#         connect.rollback()
+#         await message.answer(f'При создании таблицы произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')

@@ -89,7 +89,7 @@ async def set_activity(message: types.Message):
         #await bot.send_message(message.chat.id, "Извините, вы опоздали", reply_to_message_id=message.message_thread_id)
 
 
-@dp.message_handler(lambda c: re.match(r'#\d+$', c.text))
+@dp.message_handler(lambda c: re.match(r'#\d', c.text))
 async def test(message: types.Message):
     if not message.is_topic_message:
         return
@@ -98,7 +98,7 @@ async def test(message: types.Message):
         await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
                              "https://t.me/Testing_Enot_bot")
         return
-    cursor.execute(f"SELECT spreadsheet, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
+    cursor.execute(f"SELECT gid, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
     count = message.text.split('#')[1]
     print(count)
     gid, sp = cursor.fetchone()
@@ -107,7 +107,10 @@ async def test(message: types.Message):
 
 
 if __name__ == '__main__':
-    scheduler = AsyncIOScheduler(timezone=pytz.utc)
-    scheduler.add_job(print_wasted, trigger='cron', hour=14, minute=15, second=20, start_date=datetime.now(pytz.utc))
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone("Etc/GMT+12"))
+    scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, second=0, start_date=datetime.now(pytz.timezone("Etc/GMT+12")))
     scheduler.start()
+    scheduler2 = AsyncIOScheduler(timezone=pytz.timezone("Etc/GMT-12"))
+    scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=1, start_date=datetime.now(pytz.timezone("Etc/GMT-12")))
+    scheduler2.start()
     executor.start_polling(dp, skip_updates=True)

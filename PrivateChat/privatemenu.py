@@ -1,11 +1,12 @@
 from PrivateChat.fn import get_keyboard
 from PrivateChat.admin import *
 from PrivateChat.registration import *
+from PrivateChat.addsection import *
 
 
 @dp.message_handler(chat_type='private', commands=['start'])
 async def private_start(message: types.Message):
-    cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
+    cursor.execute(f"SELECT * FROM users WHERE tg_id={message.chat.id}")
     users = cursor.fetchone()
     if users:
         text, keyboard = get_keyboard(message.chat.id)
