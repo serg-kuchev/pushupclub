@@ -108,6 +108,6 @@ async def test(message: types.Message):
 
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler(timezone=pytz.utc)
-    scheduler.add_job(print_wasted, trigger='cron', hour=13, minute=29, start_date=datetime.now(pytz.utc))
+    scheduler.add_job(print_wasted, trigger='cron', hour=14, minute=15, second=20, start_date=datetime.now(pytz.utc))
     scheduler.start()
     executor.start_polling(dp, skip_updates=True)

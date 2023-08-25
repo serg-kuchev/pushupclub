@@ -9,11 +9,12 @@ credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d90
 service = build('sheets', 'v4', credentials=credentials)
 
 async def print_wasted():
-    result = service.spreadsheets().values().get(spreadsheetId=sp_id, range='Календарь!B3').execute()
-    wasted = result.get('values', [])
+    result = service.spreadsheets().values().get(spreadsheetId=sp_id, range='Календарь!B3:C3').execute()
+    wasted = result.get('values')[0]
+    #result = service.spreadsheets().values().get(spreadsheetId=sp_id, range='Календарь!B8:C8').execute()
+    #wasted = result.get('values', [])
     wasted_joined = ""
-    for guys in wasted:
-        wasted_joined = '\n'.join(guys)
+    wasted_joined = '\n'.join(wasted)
     if wasted:
          await bot.send_message(428170144, f"Список провалившихся участников {wasted_joined}")
     await bot.send_message(428170144, 'timed')
