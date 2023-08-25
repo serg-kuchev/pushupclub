@@ -35,19 +35,21 @@ async def set_activity(message: types.Message):
         return
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
-    #if datetime.utcnow().time().hour + int(timezone[0]) <= 12:
-    cursor.execute(f"SELECT date FROM tech_info")
-    temp = cursor.fetchone()
-    if datetime.today().date() != temp[0]:
-        a = datetime.today().date() - temp[0]
-        cursor.execute(f"UPDATE tech_info SET str_id=str_id+{a.days}, date='{datetime.today().date()}'")
-        connect.commit()
-    cursor.execute("SELECT str_id FROM tech_info")
+    string_index = 0
+    if datetime.utcnow().time().hour + int(timezone) >= 24:
+        string_index += 1
+    elif datetime.utcnow().time().hour + int(timezone) < 0:
+        string_index -= 1
+    cursor.execute("SELECT str_id FROM activities")
     str_id = cursor.fetchone()
-    cursor.execute(f"SELECT gs_id FROM users WHERE tg_id={message.from_user.id}")
+    cursor.execute(f"SELECT activity_type, gid FROM activities WHERE thread_id={message.message_thread_id}")
+    activ = cursor.fetchone()
+    cursor.execute(f"SELECT gs_id FROM user_activities WHERE tg_id={message.from_user.id} and activity='{activ[0]}'")
     gs_id = cursor.fetchone()
+    match = re.search(r'#(\d+)', message.text)
+    number = int(match.group(1))
     if gs_id[0] is None:
-        cursor.execute(f"SELECT gs_id FROM users WHERE gs_id is not NULL ORDER BY id DESC")
+        cursor.execute(f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL and activity='{activ[0]}' ORDER BY id DESC")
         maximum = cursor.fetchone()[0]
         if maximum == "Z" or len(maximum) == 2:
             if maximum[1] == "Z":
@@ -58,13 +60,13 @@ async def set_activity(message: types.Message):
                 maximum = chr(65) + chr(65)
         else:
             maximum = chr(ord(maximum[0]) + 1)
-        cursor.execute(f"UPDATE users SET gs_id='{maximum}' WHERE tg_id={message.from_user.id}")
+        cursor.execute(f"UPDATE user_activity SET gs_id='{maximum}' WHERE tg_id={message.from_user.id}")
         connect.commit()
         request = {
             'requests': [
                 {
                     'appendDimension': {
-                        'sheetId': 867585341,
+                        'sheetId': activ[1],
                         'dimension': 'COLUMNS',
                         'length': 1
                     }
@@ -79,14 +81,12 @@ async def set_activity(message: types.Message):
             "data": [
                 {"range": f"Календарь!{maximum}2:{maximum}6", 'values': [[info[0]], [info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
                 {"range": f"Календарь!{maximum}7", 'values': [[f"{info[5]}"]]},
-                {"range": f"Календарь!{maximum}{str_id[0]}", 'values': [["да"]]}]}).execute()
+            {"range": f"Календарь!{gs_id[0]}{str_id[0]+string_index}", 'values': [[number]]}]}).execute()
     else:
         results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
             "valueInputOption": "RAW",
             "data": [
-                {"range": f"Календарь!{gs_id[0]}{str_id[0]}", 'values': [["да"]]}]}).execute()
-    #else:
-        #await bot.send_message(message.chat.id, "Извините, вы опоздали", reply_to_message_id=message.message_thread_id)
+                {"range": f"Календарь!{gs_id[0]}{str_id[0]+string_index}", 'values': [[number]]}]}).execute()
 
 
 @dp.message_handler(lambda c: re.match(r'#\d', c.text))
@@ -100,9 +100,8 @@ async def test(message: types.Message):
         return
     cursor.execute(f"SELECT gid, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
     count = message.text.split('#')[1]
-    print(count)
-    gid, sp = cursor.fetchone()
-    print(gid, sp)
+    match = re.search(r'#(\d+)', message.text)
+    number = int(match.group(1))
     await message.answer("Ваш результат был учтён")
 
 
@@ -110,7 +109,7 @@ if __name__ == '__main__':
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Etc/GMT+12"))
     scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, second=0, start_date=datetime.now(pytz.timezone("Etc/GMT+12")))
     scheduler.start()
-    scheduler2 = AsyncIOScheduler(timezone=pytz.timezone("Etc/GMT-12"))
-    scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=1, start_date=datetime.now(pytz.timezone("Etc/GMT-12")))
+    scheduler2 = AsyncIOScheduler(timezone=pytz.utc)
+    scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=0, start_date=datetime.now(pytz.utc))
     scheduler2.start()
     executor.start_polling(dp, skip_updates=True)
