@@ -11,11 +11,7 @@ import pytz
 import re
 
 # AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
-
-# Configure logging
 logging.basicConfig(level=logging.INFO)
-
-# Initialize bot and dispatcher
 sp_id = "1KAY73XEKsV4H-TL4jPRqAR6CIm5rIR79ZNkeJEpn0qk"
 CREDENTIALS_FILE = 'sportbot-396814-5f4c6812d902.json'
 credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d902.json', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
@@ -112,6 +108,6 @@ async def test(message: types.Message):
 
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler(timezone=pytz.utc)
-    scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, start_date=datetime.now(pytz.utc))
+    scheduler.add_job(print_wasted, trigger='cron', hour=13, minute=29, start_date=datetime.now(pytz.utc))
     scheduler.start()
     executor.start_polling(dp, skip_updates=True)
