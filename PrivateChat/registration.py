@@ -61,3 +61,30 @@ async def register_utc(message: types.Message, state: FSMContext):
             raise Exception('ex')
     except:
         await message.answer('Вы ввели неверный формат UTC, попробуйте ещё раз')
+
+
+@dp.callback_query_handler(Text(equals='change_timezone'))
+async def change_timezone(callback: types.CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text('Введи новый часовой пояс')
+    await EditTimezone.timezone.set()
+
+
+@dp.message_handler(state=EditTimezone.timezone)
+async def edit_timezone(message: types.Message, state: FSMContext):
+    try:
+        if (int(message.text) and -12 <= int(message.text) <= 12 and (message.text[0] == '+' or '-')) or message.text == '0':
+            async with state.proxy() as data:
+                data['utc'] = message.text
+            try:
+                cursor.execute(f"UPDATE users SET timezone = '{data['utc']}' WHERE tg_id = {message.chat.id}")
+                connect.commit()
+                await message.answer("Вы успешно обновили часовой пояс. Для продолжения перейдите в основной чат!")
+            except:
+                connect.rollback()
+                await message.answer('Что-то пошло не так в процессе изменения часового пояса. Обратитесь к администратору')
+            await state.finish()
+        else:
+            raise Exception('ex')
+    except:
+        await message.answer('Вы ввели неверный формат UTC, попробуйте ещё раз')

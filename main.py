@@ -5,6 +5,10 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from PrivateChat.privatemenu import *
 from GroupChat.threadobserver import *
+from GroupChat.wasted import *
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import pytz
+import re
 
 # AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
 
@@ -17,7 +21,6 @@ CREDENTIALS_FILE = 'sportbot-396814-5f4c6812d902.json'
 credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d902.json', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
 service = build('sheets', 'v4', credentials=credentials)
 
-
 # Handler for commands
 @dp.message_handler(chat_type='supergroup', commands=['start'])
 async def send_welcome(message: types.Message):
@@ -25,8 +28,15 @@ async def send_welcome(message: types.Message):
 
 
 # Handler for messages
-@dp.message_handler(Text(contains="#отжимания"), content_types=["video", "document"])
-async def search_author(message: types.Message):
+@dp.message_handler(Text(startswith="#"), content_types=["video", "document"])
+async def set_activity(message: types.Message):
+    if not message.is_topic_message:
+        return
+    cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
+    if not cursor.fetchone:
+        await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
+                             "https://t.me/Testing_Enot_bot")
+        return
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
     #if datetime.utcnow().time().hour + int(timezone[0]) <= 12:
@@ -83,5 +93,25 @@ async def search_author(message: types.Message):
         #await bot.send_message(message.chat.id, "Извините, вы опоздали", reply_to_message_id=message.message_thread_id)
 
 
+@dp.message_handler(lambda c: re.match(r'#\d+$', c.text))
+async def test(message: types.Message):
+    if not message.is_topic_message:
+        return
+    cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
+    if not cursor.fetchone():
+        await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
+                             "https://t.me/Testing_Enot_bot")
+        return
+    cursor.execute(f"SELECT spreadsheet, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
+    count = message.text.split('#')[1]
+    print(count)
+    gid, sp = cursor.fetchone()
+    print(gid, sp)
+    await message.answer("Ваш результат был учтён")
+
+
 if __name__ == '__main__':
+    scheduler = AsyncIOScheduler(timezone=pytz.utc)
+    scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, start_date=datetime.now(pytz.utc))
+    scheduler.start()
     executor.start_polling(dp, skip_updates=True)
