@@ -24,73 +24,8 @@ async def send_welcome(message: types.Message):
 
 
 # Handler for messages
-@dp.message_handler(Text(startswith="#"), content_types=["video", "document"])
+@dp.message_handler(lambda c: re.match(r'#\d', c.caption), content_types=["video", "document"])
 async def set_activity(message: types.Message):
-    if not message.is_topic_message:
-        return
-    cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
-    if not cursor.fetchone:
-        await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
-                             "https://t.me/Testing_Enot_bot")
-        return
-    cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
-    timezone = cursor.fetchone()
-    string_index = 0
-    if datetime.utcnow().time().hour + int(timezone) >= 24:
-        string_index += 1
-    elif datetime.utcnow().time().hour + int(timezone) < 0:
-        string_index -= 1
-    cursor.execute("SELECT str_id FROM activities")
-    str_id = cursor.fetchone()
-    cursor.execute(f"SELECT activity_type, gid FROM activities WHERE thread_id={message.message_thread_id}")
-    activ = cursor.fetchone()
-    cursor.execute(f"SELECT gs_id FROM user_activities WHERE tg_id={message.from_user.id} and activity='{activ[0]}'")
-    gs_id = cursor.fetchone()
-    match = re.search(r'#(\d+)', message.text)
-    number = int(match.group(1))
-    if gs_id[0] is None:
-        cursor.execute(f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL and activity='{activ[0]}' ORDER BY id DESC")
-        maximum = cursor.fetchone()[0]
-        if maximum == "Z" or len(maximum) == 2:
-            if maximum[1] == "Z":
-                maximum = chr(ord(maximum[0]) + 1) + chr(65)
-            elif len(maximum) == 2:
-                maximum = chr(ord(maximum[0])) + chr(ord(maximum[1]) + 1)
-            else:
-                maximum = chr(65) + chr(65)
-        else:
-            maximum = chr(ord(maximum[0]) + 1)
-        cursor.execute(f"UPDATE user_activity SET gs_id='{maximum}' WHERE tg_id={message.from_user.id}")
-        connect.commit()
-        request = {
-            'requests': [
-                {
-                    'appendDimension': {
-                        'sheetId': activ[1],
-                        'dimension': 'COLUMNS',
-                        'length': 1
-                    }
-                }
-            ]
-        }
-        rs = service.spreadsheets().batchUpdate(spreadsheetId=sp_id, body=request).execute()
-        cursor.execute(f"SELECT id,name,nickname,tg_url,timezone,date_start FROM users WHERE tg_id={message.from_user.id}")
-        info = cursor.fetchone()
-        results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
-            "valueInputOption": "RAW",
-            "data": [
-                {"range": f"Календарь!{maximum}2:{maximum}6", 'values': [[info[0]], [info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
-                {"range": f"Календарь!{maximum}7", 'values': [[f"{info[5]}"]]},
-            {"range": f"Календарь!{gs_id[0]}{str_id[0]+string_index}", 'values': [[number]]}]}).execute()
-    else:
-        results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
-            "valueInputOption": "RAW",
-            "data": [
-                {"range": f"Календарь!{gs_id[0]}{str_id[0]+string_index}", 'values': [[number]]}]}).execute()
-
-
-@dp.message_handler(lambda c: re.match(r'#\d', c.text))
-async def test(message: types.Message):
     if not message.is_topic_message:
         return
     cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
@@ -98,11 +33,67 @@ async def test(message: types.Message):
         await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
                              "https://t.me/Testing_Enot_bot")
         return
-    cursor.execute(f"SELECT gid, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
-    count = message.text.split('#')[1]
-    match = re.search(r'#(\d+)', message.text)
-    number = int(match.group(1))
-    await message.answer("Ваш результат был учтён")
+    cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
+    timezone = cursor.fetchone()
+    string_index = 0
+    if datetime.utcnow().time().hour + int(timezone[0]) >= 24:
+        string_index += 1
+    elif datetime.utcnow().time().hour + int(timezone[0]) < 0:
+        string_index -= 1
+    cursor.execute(f"SELECT activity_type, gid, str_id FROM activities WHERE thread_id={message.message_thread_id}")
+    activ = cursor.fetchone()
+    if activ:
+        cursor.execute(f"SELECT gs_id FROM user_activities WHERE user_id={message.from_user.id} and activity='{activ[0]}'")
+        gs_id = cursor.fetchone()
+        match = re.search(r'#(\d+)', message.caption)
+        number = int(match.group(1))
+        if gs_id:
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+                "valueInputOption": "RAW",
+                "data": [
+                    {"range": f"Календарь!{gs_id[0]}{activ[2]+string_index}", 'values': [[number]]}]}).execute()
+        else:
+            cursor.execute(
+                f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL and activity='{activ[0]}' ORDER BY id DESC")
+            maximum = cursor.fetchone()
+            if maximum:
+                temp = maximum[0]
+                if temp == "Z" or len(temp) == 2:
+                    if temp == "Z":
+                        temp = chr(ord(temp[0]) + 1) + chr(65)
+                    elif len(temp) == 2:
+                        temp = chr(ord(temp[0])) + chr(ord(temp[1]) + 1)
+                    else:
+                        temp = chr(65) + chr(65)
+                else:
+                    temp = chr(ord(temp[0]) + 1)
+            else:
+                temp = chr(66)
+            cursor.execute(
+                f"UPDATE user_activities SET gs_id='{temp}' WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+            connect.commit()
+            request = {
+                'requests': [
+                    {
+                        'appendDimension': {
+                            'sheetId': activ[1],
+                            'dimension': 'COLUMNS',
+                            'length': 1
+                        }
+                    }
+                ]
+            }
+            rs = service.spreadsheets().batchUpdate(spreadsheetId=sp_id, body=request).execute()
+            cursor.execute(
+                f"SELECT id,name,nickname,tg_url,timezone,date_start FROM users WHERE tg_id={message.from_user.id}")
+            info = cursor.fetchone()
+            results = service.spreadsheets().values().batchUpdate(spreadsheetId=sp_id, body={
+                "valueInputOption": "RAW",
+                "data": [
+                    {"range": f"Календарь!{temp}2:{temp}6",
+                     'values': [[info[0]], [info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
+                    {"range": f"Календарь!{temp}7", 'values': [[f"{info[5]}"]]},
+                    {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 
 
 if __name__ == '__main__':
