@@ -1,5 +1,6 @@
 from PrivateChat.fn import get_keyboard
 from PrivateChat.admin import *
+from PrivateChat.registration import *
 
 
 @dp.message_handler(chat_type='private', commands=['start'])

@@ -10,7 +10,7 @@ def get_keyboard(user_id):
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     text = 'Ты уже зарегистрирован в проекте!\n' \
            'Для изменения часового пояса нажми кнопку ниже'
-    if user_id == 503889403:
+    if user_id == 50389403:
         keyboard.inline_keyboard = [
             [types.InlineKeyboardButton('Добавить новую таблицу', callback_data='add_new_activity')]
         ]

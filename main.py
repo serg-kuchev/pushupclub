@@ -1,12 +1,10 @@
 import logging
 from datetime import datetime
-from dispatcher import bot
 from aiogram.utils import executor
-from aiogram.dispatcher.filters import Text
 from google.oauth2.service_account import Credentials
-from aiogram.types import ForumTopicCreated, ContentType
 from googleapiclient.discovery import build
 from PrivateChat.privatemenu import *
+from GroupChat.threadobserver import *
 
 # AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
 
@@ -23,7 +21,6 @@ service = build('sheets', 'v4', credentials=credentials)
 # Handler for commands
 @dp.message_handler(chat_type='supergroup', commands=['start'])
 async def send_welcome(message: types.Message):
-    print(message.forum_topic_created, message.message_thread_id)
     await message.reply("Привет! Отправь мне сообщение и я попробую найти автора по ключевым словам в сообщении.")
 
 
@@ -84,21 +81,6 @@ async def search_author(message: types.Message):
                 {"range": f"Календарь!{gs_id[0]}{str_id[0]}", 'values': [["да"]]}]}).execute()
     #else:
         #await bot.send_message(message.chat.id, "Извините, вы опоздали", reply_to_message_id=message.message_thread_id)
-
-
-@dp.message_handler(content_types=[ContentType.FORUM_TOPIC_CREATED])
-async def topic_created(message: types.Message):
-    try:
-        cursor.execute(f"INSERT INTO activities(activity_type, thread_id) VALUES('{message.forum_topic_created.name}',{message.message_thread_id})")
-        connect.commit()
-    except Exception as e:
-        connect.rollback()
-        await message.answer(f'При регистрации топика произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')
-
-
-@dp.message_handler(content_types="text")
-async def test(message: types.Message):
-    print(message.from_user.id)
 
 
 if __name__ == '__main__':
