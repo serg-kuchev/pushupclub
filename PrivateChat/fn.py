@@ -13,6 +13,7 @@ def get_keyboard(user_id):
             'Чтобы изменить настройки нажми ниже')
     keyboard.inline_keyboard = [
         [types.InlineKeyboardButton('Изменить часовой пояс', callback_data='change_timezone')],
+        [types.InlineKeyboardButton('Удалить секцию', callback_data='delete_section')]
     ]
     cursor.execute(
         f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={user_id})")

@@ -1,11 +1,11 @@
+from aiogram.dispatcher.filters import Text
+from PrivateChat.fn import check_timezone
+from datetime import date
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from db import connect, cursor
 from dispatcher import dp
-from PrivateChat.fn import check_timezone
-from datetime import date
 
 
 class Register(StatesGroup):
@@ -117,3 +117,23 @@ async def edit_timezone(message: types.Message, state: FSMContext):
             raise Exception('ex')
     except:
         await message.answer('Ты ввёл неверный формат UTC, попробуй ещё раз')
+
+
+@dp.callback_query_handler(Text(equals='delete_section'))
+async def delete_section(callback: types.CallbackQuery):
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    cursor.execute("SELECT activity_type from activities")
+    buttons = []
+    at = cursor.fetchall()[0]
+    for i in range (len(at)):
+        buttons.append(types.InlineKeyboardButton(f"{at[i]}", callback_data=f"delete_activity {at[i]}"))
+    keyboard.add(*buttons)
+    await callback.message.answer("Выберите тип активности для удаления", reply_markup=keyboard)
+
+
+@dp.callback_query_handler(Text(startswith="delete_activity"))
+async def delete_activity(callback: types.CallbackQuery):
+    cursor.execute(f"DELETE FROM activities WHERE activity_type={callback.data.split(' ')[1]}")
+    connect.commit()
+    cursor.execute(f"DELETE FROM user_activities WHERE activity={callback.data.split(' ')[1]}")
+    connect.commit()
