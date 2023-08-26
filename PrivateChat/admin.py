@@ -5,6 +5,7 @@ from db import connect, cursor
 from dispatcher import dp
 
 
+
 class Activity(StatesGroup):
     gid = State()
     sp_id = State()
@@ -19,9 +20,9 @@ async def decline_activity(callback: types.CallbackQuery):
         connect.commit()
         await callback.message.edit_text(f"Таблица {activity[1]} была отклонена")
     except Exception as e:
+        print(e)
         connect.rollback()
         await callback.message.edit_text(f'При отклонении таблицы произошла ошибка\n{e}\nОбратитесь с проблемой к разработчикам!')
-
 
 @dp.callback_query_handler(lambda c: c.data.startswith('accept_activity'))
 async def accept_activity(callback: types.CallbackQuery, state: FSMContext):
