@@ -5,13 +5,15 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from db import connect, cursor
 from dispatcher import dp
 from PrivateChat.fn import check_timezone
-from datetime import date
+from datetime import datetime, timedelta
+import pytz
 
 
 class Register(StatesGroup):
     password = State()
     name = State()
     nickname = State()
+    about = State()
     utc = State()
 
 
@@ -48,6 +50,13 @@ async def register_name(message: types.Message, state: FSMContext):
 async def register_nickname(message: types.Message, state: FSMContext):
     await state.update_data(nickname=message.text)
     await Register.next()
+    await message.answer('Напиши о себе')
+
+
+@dp.message_handler(state=Register.about)
+async def register_about(message: types.Message, state: FSMContext):
+    await state.update_data(about=message.text)
+    await Register.next()
     await message.answer('Введи свой часовой пояс UTC(Если твой пояс часовой пояс UTC +2 введи просто +2\n'
                          'Если твой часовой пояс UTC -3, то введи -3)')
 
@@ -59,13 +68,14 @@ async def register_utc(message: types.Message, state: FSMContext):
             await state.update_data(utc=message.text)
             data = await state.get_data()
             try:
-                today = date.today()
+                today = datetime.now(pytz.utc) + timedelta(hours=int(data['utc']))
                 telegram = f"https://t.me/{message.from_user.username}"
-                cursor.execute(f"INSERT INTO users(tg_id, name, nickname, timezone, tg_url, date_start) "
-                               f"VALUES({message.chat.id},'{data['name']}','{data['nickname']}','{data['utc']}','{telegram}','{today.strftime('%d.%m.%y')}')")
+                cursor.execute(f"INSERT INTO users(tg_id, name, nickname, timezone, tg_url, date_start, about) "
+                               f"VALUES({message.chat.id},'{data['name']}','{data['nickname']}','{data['utc']}','{telegram}','{today}','{data['about']}')")
                 connect.commit()
                 await message.answer("Ты успешно зарегистрировался. Для продолжения перейди в основной чат!")
             except Exception as e:
+                print(e)
                 connect.rollback()
                 await message.answer('Что-то пошло не так в процессе регистрации. Обратитесь к администратору')
             await state.finish()
