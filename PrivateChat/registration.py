@@ -103,12 +103,13 @@ async def edit_timezone(message: types.Message, state: FSMContext):
                 print(info)
                 from main import service
                 for i in info:
-                    rs = service.spreadsheet().values().batchUpdate(spreadsheetId=i[1], body={
+                    rs = service.spreadsheets().values().batchUpdate(spreadsheetId=i[1], body={
                         "valueInputOption": "RAW",
-                        "data": [{"range": f"Календарь!{i[0]}6", "values": [[data['utc']]]}]
-                    })
+                        "data": [{"range": f"Календарь!{i[0]}6", "values": [['UTC ' + data['utc']]]}]
+                    }).execute()
                 await message.answer("Ты успешно сменил часовой пояс. Для продолжения перейди в основной чат!")
-            except:
+            except Exception as e:
+                print(e)
                 connect.rollback()
                 await message.answer('Что-то пошло не так в процессе изменения часового пояса. Обратись к администратору')
             await state.finish()
