@@ -91,14 +91,14 @@ async def set_activity(message: types.Message):
             }
             rs = service.spreadsheets().batchUpdate(spreadsheetId=activ[3], body=request).execute()
             cursor.execute(
-                f"SELECT id,name,nickname,tg_url,timezone,date_start FROM users WHERE tg_id={message.from_user.id}")
+                f"SELECT id,name,nickname,tg_url,timezone,date_start,about FROM users WHERE tg_id={message.from_user.id}")
             info = cursor.fetchone()
             results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                 "valueInputOption": "RAW",
                 "data": [
-                    {"range": f"Календарь!{temp}3:{temp}6",
-                     'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])]]},
-                    {"range": f"Календарь!{temp}7", 'values': [[f"{info[5]}"]]},
+                    {"range": f"Календарь!{temp}3:{temp}7",
+                     'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])], [info[6]]]},
+                    {"range": f"Календарь!{temp}8", 'values': [[f"{info[5]}"]]},
                     {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 
 

@@ -44,7 +44,7 @@ async def activity_type(message: types.Message, state: FSMContext):
     data = await state.get_data()
     await state.finish()
     try:
-        cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id=8 WHERE thread_id={data['thread_id']}")
+        cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id=9 WHERE thread_id={data['thread_id']}")
         connect.commit()
         await message.answer(f"Таблица {data['activity_type']} успешно создана")
     except Exception as e:

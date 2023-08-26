@@ -62,7 +62,7 @@ async def register_utc(message: types.Message, state: FSMContext):
                 today = date.today()
                 telegram = f"https://t.me/{message.from_user.username}"
                 cursor.execute(f"INSERT INTO users(tg_id, name, nickname, timezone, tg_url, date_start) "
-                               f"VALUES({message.chat.id},'{data['name']}','{data['nickname']}','{data['utc']}','{telegram}','{today.strftime('%d.%m.%y')}')")
+                               f"VALUES({message.chat.id},'{data['name']}','{data['nickname']}','{data['utc']}','{telegram}','{today}')")
                 connect.commit()
                 await message.answer("Ты успешно зарегистрировался. Для продолжения перейди в основной чат!")
             except Exception as e:
@@ -91,6 +91,14 @@ async def edit_timezone(message: types.Message, state: FSMContext):
             try:
                 cursor.execute(f"UPDATE users SET timezone = '{data['utc']}' WHERE tg_id = {message.chat.id}")
                 connect.commit()
+                cursor.execute(f"SELECT gs_id, sp_id FROM user_activities JOIN activities ON activity=activity_type WHERE user_id={message.chat.id}")
+                info = cursor.fetchall()
+                from main import service
+                for i in info:
+                    rs = service.spreadsheet().values().batchUpdate(spreadsheetId=i[1], body={
+                        "valueInputOption": "RAW",
+                        "data": [{"range": f"Календарь!{i[0]}6", "values": [[data['utc']]]}]
+                    })
                 await message.answer("Ты успешно сменил часовой пояс. Для продолжения перейди в основной чат!")
             except:
                 connect.rollback()
