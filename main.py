@@ -16,6 +16,7 @@ CREDENTIALS_FILE = 'sportbot-396814-5f4c6812d902.json'
 credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d902.json', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
 service = build('sheets', 'v4', credentials=credentials)
 
+
 # Handler for commands
 @dp.message_handler(chat_type='supergroup', commands=['start'])
 async def send_welcome(message: types.Message):

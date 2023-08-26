@@ -16,12 +16,26 @@ async def section_register(callback: types.CallbackQuery):
     for activity in cursor.fetchall():
         keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity[0]}", callback_data=f"section_register {activity[0]}")])
     keyboard.inline_keyboard.append([types.InlineKeyboardButton('Вернуться в главное меню', callback_data='section_register_back')])
-    await callback.message.answer('Выберите секцию, на которую хотите записаться', reply_markup=keyboard)
+    user_message = await callback.message.answer('Выберите секцию, на которую хотите записаться', reply_markup=keyboard)
+    try:
+        cursor.execute(
+            f"UPDATE users SET menustatus={True}, menumessage={user_message.message_id} WHERE tg_id={callback.message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
 
 
 @dp.callback_query_handler(lambda c: c.data == "section_register_back")
 async def section_register_back(callback: types.CallbackQuery):
-    await callback.answer("Вы были возвращены в главное меню")
+    try:
+        cursor.execute(
+            f"UPDATE users SET menustatus={False}, menumessage = NULL WHERE tg_id={callback.message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
+    await callback.answer("Ты были возвращён в главное меню")
     await callback.message.delete()
     from PrivateChat.privatemenu import private_start
     await private_start(callback.message)
@@ -33,9 +47,16 @@ async def section_register_concrete(callback: types.CallbackQuery):
         activity = callback.data.split('section_register ')[1]
         cursor.execute(f"INSERT INTO user_activities(user_id, activity) VALUES({callback.message.chat.id},'{activity}')")
         connect.commit()
-        await callback.message.edit_text(f"Вы были успешно зарегистрированы на секцию {activity}")
+        await callback.message.edit_text(f"Ты успешно зарегистрирован в челлендже «{activity}»")
     except Exception as e:
         print(e)
         connect.rollback()
         await callback.message.edit_text(f'При записи на секцию произошла ошибка\n'
                                          f'Обратитесь с проблемой к администратору!')
+    try:
+        cursor.execute(
+            f"UPDATE users SET menustatus={False}, menumessage = NULL WHERE tg_id={callback.message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
