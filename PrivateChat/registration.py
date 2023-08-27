@@ -20,6 +20,10 @@ class EditTimezone(StatesGroup):
     timezone = State()
 
 
+class EditAbout(StatesGroup):
+    about = State()
+
+
 @dp.callback_query_handler(Text(equals='register'))
 async def register(callback: types.CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=None)
@@ -131,3 +135,28 @@ async def edit_timezone(message: types.Message, state: FSMContext):
             raise Exception('ex')
     except:
         await message.answer('Ты ввёл неверный формат UTC, попробуй ещё раз')
+
+
+@dp.callback_query_handler(lambda c: c.data == "edit_about")
+async def edit_about_menu(callback: types.CallbackQuery):
+    await callback.answer()
+    await callback.message.edit_text("Введи новую информацию о себе")
+    await EditAbout.about.set()
+
+
+@dp.message_handler(state=EditAbout.about)
+async def edit_about(message: types.Message):
+    try:
+        cursor.execute(f"UPDATE users SET about='{message.text}' WHERE tg_id={message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
+        await message.answer('Что-то пошло не так в процессе изменения информации о себе. Обратись к администратору')
+    try:
+        cursor.execute(
+            f"UPDATE users SET menustatus={False}, menumessage = NULL WHERE tg_id={message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
