@@ -29,7 +29,7 @@ async def register(callback: types.CallbackQuery):
 
 @dp.message_handler(state=Register.password)
 async def register_password(message: types.Message, state: FSMContext):
-    if message.text == "335577":
+    if message.text == "1111":
         await Register.next()
         await message.answer('Введи своё имя\n(например: Александр)')
     else:

@@ -14,7 +14,7 @@ def get_keyboard(user_id):
     keyboard.inline_keyboard = [
         [types.InlineKeyboardButton('Изменить часовой пояс', callback_data='change_timezone')],
     ]
-    if user_id == 503889403: #200570950
+    if user_id in [503889403, 200570950, 623323275]: #200570950
         cursor.execute("SELECT activity_type FROM activities")
         activities = cursor.fetchone()
         if activities:
