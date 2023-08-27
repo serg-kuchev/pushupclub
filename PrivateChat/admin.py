@@ -34,7 +34,7 @@ async def decline_activity(callback: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data.startswith('accept_activity'))
 async def accept_activity(callback: types.CallbackQuery, state: FSMContext):
-    activity = callback.data.split(' ')
+    activity = callback.data.split('~')
     await state.update_data(activity_type=activity[1], thread_id=int(activity[2]))
     await Activity.gid.set()
     await callback.message.edit_text('Добавьте gid номер листа(располагается в самом конце)')
@@ -53,7 +53,12 @@ async def activity_type(message: types.Message, state: FSMContext):
     data = await state.get_data()
     await state.finish()
     try:
-        cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id=9 WHERE thread_id={data['thread_id']}")
+        cursor.execute(f"SELECT str_id FROM activities WHERE thread_id={data['thread_id']}")
+        if cursor.fetchone()[0]:
+            cursor.execute(f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}', str_id=9 WHERE thread_id={data['thread_id']}")
+        else:
+            cursor.execute(
+                f"UPDATE activities SET gid='{data['gid']}', sp_id='{data['sp_id']}' WHERE thread_id={data['thread_id']}")
         connect.commit()
         await message.answer(f"Таблица {data['activity_type']} успешно создана")
     except Exception as e:
@@ -77,7 +82,7 @@ async def delete_section(callback: types.CallbackQuery):
     buttons = []
     at = cursor.fetchall()
     for i in range(len(at)):
-        buttons.append(types.InlineKeyboardButton(f"{at[i][0]}", callback_data=f"delete_section {at[i][0]}"))
+        buttons.append(types.InlineKeyboardButton(f"{at[i][0]}", callback_data=f"delete_section~{at[i][0]}"))
     keyboard.add(*buttons)
     user_message = await callback.message.answer("Выберите тип активности для удаления", reply_markup=keyboard)
     try:
@@ -89,12 +94,12 @@ async def delete_section(callback: types.CallbackQuery):
         connect.rollback()
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith("delete_section "))
+@dp.callback_query_handler(lambda c: c.data.startswith("delete_section~"))
 async def delete_section_concrete(callback: types.CallbackQuery):
     await callback.message.delete()
-    cursor.execute(f"DELETE FROM user_activities WHERE activity='{callback.data.split(' ')[1]}'")
+    cursor.execute(f"DELETE FROM user_activities WHERE activity='{callback.data.split('~')[1]}'")
     connect.commit()
-    cursor.execute(f"DELETE FROM activities WHERE activity_type='{callback.data.split(' ')[1]}'")
+    cursor.execute(f"DELETE FROM activities WHERE activity_type='{callback.data.split('~')[1]}'")
     connect.commit()
     await callback.message.answer('Секция была успешно удалена')
     try:
@@ -113,7 +118,7 @@ async def edit_section(callback: types.CallbackQuery):
     cursor.execute("SELECT activity_type, thread_id from activities")
     activities = cursor.fetchall()
     for activity in activities:
-        keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity[0]}", callback_data=f"edit_section {activity[0]} {activity[1]}")])
+        keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity[0]}", callback_data=f"edit_section~{activity[0]}~{activity[1]}")])
     user_message = await callback.message.answer("Выберите секцию для редактирования\nПри нажатии необходимо будет пройти повторную регистрацию таблицы", reply_markup=keyboard)
     try:
         cursor.execute(
@@ -124,9 +129,9 @@ async def edit_section(callback: types.CallbackQuery):
         connect.rollback()
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith("edit_section "))
+@dp.callback_query_handler(lambda c: c.data.startswith("edit_section~"))
 async def edit_section_concrete(callback: types.CallbackQuery, state: FSMContext):
-    activity = callback.data.split(' ')
+    activity = callback.data.split('~')
     await state.update_data(activity_type=activity[1], thread_id=int(activity[2]))
     await Activity.gid.set()
     await callback.message.edit_text('Добавьте gid номер листа(располагается в самом конце)')

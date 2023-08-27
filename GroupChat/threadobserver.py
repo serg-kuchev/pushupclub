@@ -12,10 +12,10 @@ async def topic_created(message: types.Message):
         cursor.execute(f"INSERT INTO activities(activity_type, thread_id) VALUES('{topic_name}',{thread_id})")
         connect.commit()
         keyboard = types.InlineKeyboardMarkup(row_width=1, inline_keyboard=[
-            [types.InlineKeyboardButton(f"Добавить таблицу {topic_name}", callback_data=f"accept_activity {topic_name} {thread_id}")],
-            [types.InlineKeyboardButton(f"Отменить создание таблицы", callback_data=f"decline_activity {topic_name} {thread_id}")]
+            [types.InlineKeyboardButton(f"Добавить таблицу {topic_name}", callback_data=f"accept_activity~{topic_name}~{thread_id}")],
+            [types.InlineKeyboardButton(f"Отменить создание таблицы", callback_data=f"decline_activity~{topic_name}~{thread_id}")]
         ])
-        await bot.send_message(200570950, f"В беседе был создан новый топик с названием {topic_name}\n", reply_markup=keyboard)
+        await bot.send_message(503889403, f"В беседе был создан новый топик с названием {topic_name}\n", reply_markup=keyboard)
     except Exception as e:
         print(e)
         connect.rollback()

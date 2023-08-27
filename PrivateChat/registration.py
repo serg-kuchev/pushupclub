@@ -145,10 +145,20 @@ async def edit_about_menu(callback: types.CallbackQuery):
 
 
 @dp.message_handler(state=EditAbout.about)
-async def edit_about(message: types.Message):
+async def edit_about(message: types.Message, state: FSMContext):
     try:
         cursor.execute(f"UPDATE users SET about='{message.text}' WHERE tg_id={message.chat.id}")
         connect.commit()
+        cursor.execute(
+            f"SELECT gs_id, sp_id FROM user_activities JOIN activities ON activity=activity_type WHERE user_id={message.chat.id}")
+        info = cursor.fetchall()
+        from main import service
+        for i in info:
+            rs = service.spreadsheets().values().batchUpdate(spreadsheetId=i[1], body={
+                "valueInputOption": "RAW",
+                "data": [{"range": f"Календарь!{i[0]}7", "values": [[message.text]]}]
+            }).execute()
+        await message.answer('Ты успешно сменил информацию о себе')
     except Exception as e:
         print(e)
         connect.rollback()
@@ -160,3 +170,4 @@ async def edit_about(message: types.Message):
     except Exception as e:
         print(e)
         connect.rollback()
+    await state.finish()

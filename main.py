@@ -18,9 +18,9 @@ service = build('sheets', 'v4', credentials=credentials)
 
 
 # Handler for commands
-@dp.message_handler(chat_type='supergroup', commands=['start'])
+@dp.message_handler(content_types=["video", "document"])
 async def send_welcome(message: types.Message):
-    await message.reply("Привет! Отправь мне сообщение и я попробую найти автора по ключевым словам в сообщении.")
+    print("timed")
 
 
 # Handler for messages
