@@ -4,7 +4,7 @@ from db import cursor, connect
 
 async def print_wasted():
     from main import service
-    cursor.execute("SELECT DISTINCT activity_type, gid, sp_id FROM activities")
+    cursor.execute("SELECT DISTINCT activity_type, gid, sp_id, thread_id FROM activities")
     activities = cursor.fetchall()
     for activity in activities:
         wasted = []
@@ -25,7 +25,7 @@ async def print_wasted():
                 wasted.append(retard)
             if wasted:
                 wasted_joined = '\n'.join(wasted)
-                await bot.send_message(-1001934744880, f"Список Опоздавших в {activity[0]}\n{wasted_joined}")
+                await bot.send_message(-1001665866587, f"Список Опоздавших в {activity[0]}\n{wasted_joined}", reply_to_message_id=activities[3])
 
 
 async def increment_activity_str():
