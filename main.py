@@ -17,12 +17,6 @@ credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d90
 service = build('sheets', 'v4', credentials=credentials)
 
 
-# Handler for commands
-@dp.message_handler(content_types=["video", "document"])
-async def send_welcome(message: types.Message):
-    print("timed")
-
-
 # Handler for messages
 @dp.message_handler(lambda c: re.match(r'#\d', c.caption), content_types=["video", "document"])
 async def set_activity(message: types.Message):
@@ -30,15 +24,15 @@ async def set_activity(message: types.Message):
         return
     cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
     if not cursor.fetchone():
-        await message.answer("Вы не зарегистрированы в проекте, для участия пройдите регистрацию по ссылке ниже\n"
-                             "https://t.me/Testing_Enot_bot")
+        await message.answer("Ты не зарегистрирован в проекте, для участия пройди регистрацию по ссылке ниже\n"
+                             "https://t.me/upclubot")
         return
     cursor.execute(f"SELECT activity_type FROM activities WHERE thread_id={message.message_thread_id}")
     activity = cursor.fetchone()[0]
     cursor.execute(f"SELECT * FROM user_activities WHERE user_id={message.from_user.id} AND activity='{activity}'")
     if not cursor.fetchone():
-        await message.answer("Вы не зарегистрированы в секции, для регистрации пройдите регистрацию по ссылке ниже\n"
-                             "https://t.me/Testing_Enot_bot")
+        await message.answer("Ты не зарегистрирован в секции, для участия пройди регистрацию по ссылке ниже\n"
+                             "https://t.me/upclubot")
         return
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
@@ -60,25 +54,37 @@ async def set_activity(message: types.Message):
                 "data": [
                     {"range": f"Календарь!{gs_id[0]}{activ[2]+string_index}", 'values': [[number]]}]}).execute()
         else:
-            cursor.execute(
-                f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL and activity='{activ[0]}' ORDER BY id DESC")
-            maximum = cursor.fetchone()
+            cursor.execute(f"SELECT max(column_id) from user_activities WHERE activity='{activ[0]}'")
+            max_column = cursor.fetchone()[0]
+            if max_column:
+                cursor.execute( f"SELECT gs_id FROM user_activities WHERE column_id = {max_column} and activity='{activ[0]}' ORDER BY column_id DESC")
+                maximum = cursor.fetchone()
+            else:
+                maximum = None
             if maximum:
                 temp = maximum[0]
                 if temp == "Z" or len(temp) == 2:
                     if temp == "Z":
+                        temp = chr(65) + chr(65)
+                    elif len(temp) == 2 and temp[1] == 'Z':
                         temp = chr(ord(temp[0]) + 1) + chr(65)
                     elif len(temp) == 2:
                         temp = chr(ord(temp[0])) + chr(ord(temp[1]) + 1)
-                    else:
-                        temp = chr(65) + chr(65)
                 else:
                     temp = chr(ord(temp[0]) + 1)
             else:
                 temp = chr(66)
-            cursor.execute(
-                f"UPDATE user_activities SET gs_id='{temp}' WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
-            connect.commit()
+            try:
+                if temp != chr(66):
+                    cursor.execute(
+                        f"UPDATE user_activities SET gs_id='{temp}', column_id={max_column + 1} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+                else:
+                    cursor.execute(
+                        f"UPDATE user_activities SET gs_id='{temp}', column_id={1} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+                connect.commit()
+            except Exception as e:
+                print(e)
+                connect.rollback()
             request = {
                 'requests': [
                     {
@@ -92,15 +98,27 @@ async def set_activity(message: types.Message):
             }
             rs = service.spreadsheets().batchUpdate(spreadsheetId=activ[3], body=request).execute()
             cursor.execute(
-                f"SELECT id,name,nickname,tg_url,timezone,date_start,about FROM users WHERE tg_id={message.from_user.id}")
+                f"SELECT id,name,nickname,tg_url,timezone,about FROM users WHERE tg_id={message.from_user.id}")
             info = cursor.fetchone()
-            results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
-                "valueInputOption": "RAW",
-                "data": [
-                    {"range": f"Календарь!{temp}3:{temp}7",
-                     'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])], [info[6]]]},
-                    {"range": f"Календарь!{temp}8", 'values': [[f"{info[5]}"]]},
-                    {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
+            current_day = datetime.utcnow().date() + timedelta(hours=int(info[4]))
+            current_day_refactored = datetime.strptime(str(current_day), "%Y-%m-%d")
+            try:
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
+                    "valueInputOption": "RAW",
+                    "data": [
+                        {"range": f"Календарь!{temp}3:{temp}7",
+                         'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])], [info[5]]]},
+                        {"range": f"Календарь!{temp}8", 'values': [[f"{current_day_refactored.strftime('%d.%m.%y')}"]]},
+                        {"range": f"Календарь!{temp}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
+            except Exception as e:
+                print("internal server error",e)
+                results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
+                    "valueInputOption": "RAW",
+                    "data": [
+                        {"range": f"Календарь!{temp}3:{temp}7",
+                         'values': [[info[1]], [info[2]], [info[3]], ["UTC " + str(info[4])], [info[5]]]},
+                        {"range": f"Календарь!{temp}8", 'values': [[f"{current_day_refactored.strftime('%d.%m.%y')}"]]},
+                        {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 
 
 if __name__ == '__main__':

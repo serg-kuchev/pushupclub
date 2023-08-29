@@ -1,5 +1,7 @@
 from dispatcher import bot
 from db import cursor, connect
+from datetime import datetime, timedelta
+import pytz
 
 
 async def print_wasted():
@@ -8,6 +10,7 @@ async def print_wasted():
     activities = cursor.fetchall()
     for activity in activities:
         wasted = []
+        today = datetime.now(pytz.timezone("Etc/GMT+12")) - timedelta(minutes=1)
         cursor.execute(f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL AND activity='{activity[0]}'")
         maximum = cursor.fetchall()
         for i in range(len(maximum)):
@@ -18,14 +21,23 @@ async def print_wasted():
             current_str = cursor.fetchone()[0]
             result = service.spreadsheets().values().get(spreadsheetId=activity[2],
                                                          range=f"Календарь!{maximum[i][0]}{current_str - 1}").execute()
+            result = service.spreadsheets().values().get(spreadsheetId=activity[2],
+                                                         range=f"Календарь!{maximum[i][0]}8").execute()
+            user = result.get('values')[0]
             try:
-                w2 = result.get('values')[0]
+                user_refactored = datetime.strptime(user[0], "%d.%m.%Y")
             except:
-                retard = '@' + w1[0].split('https://t.me/')[1]
-                wasted.append(retard)
-            if wasted:
-                wasted_joined = '\n'.join(wasted)
-                await bot.send_message(-1001665866587, f"Список Опоздавших в {activity[0]}\n{wasted_joined}", reply_to_message_id=activities[3])
+                user_refactored = datetime.strptime(user[0], "%d.%m.%y")
+            pytz_refactored = pytz.timezone("Etc/GMT+12").localize(user_refactored)
+            if pytz_refactored < today:
+                try:
+                    w2 = result.get('values')[0]
+                except:
+                    retard = '@' + w1[0].split('https://t.me/')[1]
+                    wasted.append(retard)
+        if wasted:
+            wasted_joined = '\n'.join(wasted)
+            await bot.send_message(-1001665866587, f"Список Опоздавших в {activity[0]}\n{wasted_joined}", reply_to_message_id=activities[3])
 
 
 async def increment_activity_str():
