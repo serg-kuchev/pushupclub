@@ -28,20 +28,22 @@ async def print_wasted():
                                                      range=f"Календарь!B8:{maximum}8").execute()
         user = result.get('values')[0]
         difference = len(user) - len(values)
+        wasted_users_date = []
         wasted_users = []
         for i in range(difference):
             values.append('')
         for z in range(len(values)):
             if values[z] == '':
-                wasted_users.append(user[z])
-        for x in range(len(user)):
+                wasted_users.append(w1[z])
+                wasted_users_date.append(user[z])
+        for x in range(len(wasted_users_date)):
             try:
-                user_refactored = datetime.strptime(wasted_users[x], "%d.%m.%Y")
+                user_refactored = datetime.strptime(wasted_users_date[x], "%d.%m.%Y")
             except:
-                user_refactored = datetime.strptime(wasted_users[x], "%d.%m.%y")
+                user_refactored = datetime.strptime(wasted_users_date[x], "%d.%m.%y")
             pytz_refactored = pytz.timezone("Etc/GMT+12").localize(user_refactored)
             if pytz_refactored < today:
-                retard = '@' + w1[0].split('https://t.me/')[1]
+                retard = '@' + wasted_users[x].split('https://t.me/')[1]
                 wasted.append(retard)
         if wasted:
             wasted_joined = '\n'.join(wasted)
