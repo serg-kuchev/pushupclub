@@ -11,30 +11,38 @@ async def print_wasted():
     for activity in activities:
         wasted = []
         today = datetime.now(pytz.timezone("Etc/GMT+12")) - timedelta(minutes=1)
-        cursor.execute(f"SELECT gs_id FROM user_activities WHERE gs_id is not NULL AND activity='{activity[0]}'")
-        maximum = cursor.fetchall()
-        for i in range(len(maximum)):
-            result = service.spreadsheets().values().get(spreadsheetId=activity[2],
-                                                         range=f"Календарь!{maximum[i][0]}5").execute()
-            w1 = result.get('values')[0]
-            cursor.execute(f"SELECT str_id FROM activities WHERE activity_type='{activity[0]}'")
-            current_str = cursor.fetchone()[0]
-            result = service.spreadsheets().values().get(spreadsheetId=activity[2],
-                                                         range=f"Календарь!{maximum[i][0]}{current_str - 1}").execute()
-            result = service.spreadsheets().values().get(spreadsheetId=activity[2],
-                                                         range=f"Календарь!{maximum[i][0]}8").execute()
-            user = result.get('values')[0]
+        cursor.execute(f"SELECT max(column_id) from user_activities WHERE activity='{activity[0]}'")
+        max_column = cursor.fetchone()[0]
+        cursor.execute(
+            f"SELECT gs_id FROM user_activities WHERE column_id = {max_column} and activity='{activity[0]}' ORDER BY column_id DESC")
+        maximum = cursor.fetchone()[0]
+        result = service.spreadsheets().values().get(spreadsheetId=activity[2],
+                                                     range=f"Календарь!B5:{maximum}5",).execute()
+        w1 = result.get('values')[0]
+        cursor.execute(f"SELECT str_id FROM activities WHERE activity_type='{activity[0]}'")
+        current_str = cursor.fetchone()[0]
+        result = service.spreadsheets().values().get(spreadsheetId=activity[2],
+                                                     range=f"Календарь!B{current_str-1}:{maximum}{current_str - 1}").execute()
+        values = result.get('values')[0]
+        result = service.spreadsheets().values().get(spreadsheetId=activity[2],
+                                                     range=f"Календарь!B8:{maximum}8").execute()
+        user = result.get('values')[0]
+        difference = len(user) - len(values)
+        wasted_users = []
+        for i in range(difference):
+            values.append('')
+        for z in range(len(values)):
+            if values[z] == '':
+                wasted_users.append(user[z])
+        for x in range(len(user)):
             try:
-                user_refactored = datetime.strptime(user[0], "%d.%m.%Y")
+                user_refactored = datetime.strptime(wasted_users[x], "%d.%m.%Y")
             except:
-                user_refactored = datetime.strptime(user[0], "%d.%m.%y")
+                user_refactored = datetime.strptime(wasted_users[x], "%d.%m.%y")
             pytz_refactored = pytz.timezone("Etc/GMT+12").localize(user_refactored)
             if pytz_refactored < today:
-                try:
-                    w2 = result.get('values')[0]
-                except:
-                    retard = '@' + w1[0].split('https://t.me/')[1]
-                    wasted.append(retard)
+                retard = '@' + w1[0].split('https://t.me/')[1]
+                wasted.append(retard)
         if wasted:
             wasted_joined = '\n'.join(wasted)
             await bot.send_message(-1001665866587, f"Список Опоздавших в {activity[0]}\n{wasted_joined}", reply_to_message_id=activities[3])
