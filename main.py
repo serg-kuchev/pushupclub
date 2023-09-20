@@ -1,14 +1,16 @@
 import logging
+import time
 from datetime import datetime
 from aiogram.utils import executor
 from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
 from PrivateChat.privatemenu import *
+from googleapiclient.discovery import build
 from GroupChat.threadobserver import *
 from GroupChat.wasted import *
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import pytz
 import re
+import asyncio
 
 # AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
 logging.basicConfig(level=logging.INFO)
@@ -18,9 +20,15 @@ service = build('sheets', 'v4', credentials=credentials)
 
 
 # Handler for messages
-@dp.message_handler(lambda c: re.match(r'#\d', c.caption), content_types=["video", "document"])
+@dp.message_handler(content_types=["video", "document", "animation"])
 async def set_activity(message: types.Message):
     if not message.is_topic_message:
+        return
+    if message.caption is not None:
+        print(f"caption message: {message.caption}")
+        if not re.match(r'#\d', message.caption):
+            return
+    else:
         return
     cursor.execute(f"SELECT * FROM users WHERE tg_id={message.from_user.id}")
     if not cursor.fetchone():
@@ -111,7 +119,8 @@ async def set_activity(message: types.Message):
                         {"range": f"Календарь!{temp}8", 'values': [[f"{current_day_refactored.strftime('%d.%m.%y')}"]]},
                         {"range": f"Календарь!{temp}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
             except Exception as e:
-                print("internal server error",e)
+                print("internal server error\nretry in 30 seconds...",e)
+                await asyncio.sleep(30)
                 results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                     "valueInputOption": "RAW",
                     "data": [
@@ -121,11 +130,23 @@ async def set_activity(message: types.Message):
                         {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 
 
+def main():
+    try:
+        executor.start_polling(dp, skip_updates=True)
+    except Exception as e:
+        # Здесь можно добавить логирование ошибки
+        print(f"An error occurred: {str(e)}")
+        time.sleep(5)
+        main()
+
+
 if __name__ == '__main__':
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Etc/GMT+12"))
-    scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, second=0, start_date=datetime.now(pytz.timezone("Etc/GMT+12")))
+    scheduler.add_job(print_wasted, trigger='cron', hour=0, minute=0, second=0,
+                      start_date=datetime.now(pytz.timezone("Etc/GMT+12")))
     scheduler.start()
     scheduler2 = AsyncIOScheduler(timezone=pytz.utc)
-    scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=0, start_date=datetime.now(pytz.utc))
+    scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=0,
+                       start_date=datetime.now(pytz.utc))
     scheduler2.start()
-    executor.start_polling(dp, skip_updates=True)
+    main()

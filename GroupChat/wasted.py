@@ -23,7 +23,12 @@ async def print_wasted():
         current_str = cursor.fetchone()[0]
         result = service.spreadsheets().values().get(spreadsheetId=activity[2],
                                                      range=f"Календарь!B{current_str-1}:{maximum}{current_str - 1}").execute()
-        values = result.get('values')[0]
+        try:
+            values = result.get('values')[0]
+        except:
+            values = []
+            for i in range(len(w1)):
+                values.append('')
         result = service.spreadsheets().values().get(spreadsheetId=activity[2],
                                                      range=f"Календарь!B8:{maximum}8").execute()
         user = result.get('values')[0]

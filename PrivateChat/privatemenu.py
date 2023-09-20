@@ -13,7 +13,7 @@ async def private_start(message: types.Message):
         cursor.execute(f"SELECT menumessage FROM users WHERE tg_id = {message.chat.id}")
         menu_message = cursor.fetchone()[0]
         if menu_message:
-            await bot.delete_message(chat_id=message.chat.id, message_id=menu_message)
+            await bot.edit_message_text(chat_id=message.chat.id, message_id=menu_message, text='удалено')
         text, keyboard = get_keyboard(message.chat.id)
         user_message = await message.answer(text, reply_markup=keyboard)
         try:

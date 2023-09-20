@@ -10,7 +10,10 @@ from datetime import date
 
 @dp.callback_query_handler(lambda c: c.data == 'section_register')
 async def section_register(callback: types.CallbackQuery):
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except:
+        pass
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     cursor.execute(f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={callback.message.chat.id})")
     for activity in cursor.fetchall():
@@ -36,7 +39,10 @@ async def section_register_back(callback: types.CallbackQuery):
         print(e)
         connect.rollback()
     await callback.answer("Ты были возвращён в главное меню")
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except:
+        pass
     from PrivateChat.privatemenu import private_start
     await private_start(callback.message)
 
