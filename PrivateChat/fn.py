@@ -23,7 +23,7 @@ def get_keyboard(user_id):
             keyboard.inline_keyboard.append([types.InlineKeyboardButton('Редактировать секцию', callback_data='edit_section')])
             keyboard.inline_keyboard.append([types.InlineKeyboardButton('Удалить секцию', callback_data='delete_section')])
     cursor.execute(
-        f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={user_id})")
+        f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={user_id} AND status={False})")
     if cursor.fetchone():
         keyboard.inline_keyboard.append([types.InlineKeyboardButton('Записаться на секцию', callback_data='section_register')])
     cursor.execute(f"SELECT join_date FROM user_activities WHERE user_id={user_id}")

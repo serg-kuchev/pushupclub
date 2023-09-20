@@ -79,3 +79,6 @@ cursor = connect.cursor()
 
 #cursor.execute(f"INSERT INTO user_activities(user_id, activity, join_date) VALUES(503889403, 'отжимания', '{datetime.now(pytz.timezone('Etc/GMT+3')).date()}')")
 #connect.commit()
+
+
+print(datetime.today().date())

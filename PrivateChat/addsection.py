@@ -1,3 +1,5 @@
+import datetime
+
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
@@ -15,7 +17,7 @@ async def section_register(callback: types.CallbackQuery):
     except:
         pass
     keyboard = types.InlineKeyboardMarkup(row_width=1)
-    cursor.execute(f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={callback.message.chat.id})")
+    cursor.execute(f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={callback.message.chat.id} AND status={True})")
     for activity in cursor.fetchall():
         keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{activity[0]}", callback_data=f"section_register {activity[0]}")])
     keyboard.inline_keyboard.append([types.InlineKeyboardButton('Вернуться в главное меню', callback_data='section_register_back')])
@@ -51,8 +53,13 @@ async def section_register_back(callback: types.CallbackQuery):
 async def section_register_concrete(callback: types.CallbackQuery):
     try:
         activity = callback.data.split('section_register ')[1]
-        cursor.execute(f"INSERT INTO user_activities(user_id, activity) VALUES({callback.message.chat.id},'{activity}')")
-        connect.commit()
+        cursor.execute(f"SELECT status FROM user_activities WHERE user_id={callback.message.chat.id} AND activity ={activity}")
+        if not cursor.fetchone():
+            cursor.execute(f"INSERT INTO user_activities(user_id, activity) VALUES({callback.message.chat.id},'{activity}')")
+            connect.commit()
+        else:
+            cursor.execute(f"UPDATE user_activities SET status={True} WHERE user_id={callback.message.chat.id}")
+            connect.commit()
         await callback.message.edit_text(f"Ты успешно зарегистрирован в челлендже «{activity}»")
     except Exception as e:
         print(e)

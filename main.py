@@ -57,11 +57,19 @@ async def set_activity(message: types.Message):
     cursor.execute(f"SELECT activity_type, gid, str_id, sp_id FROM activities WHERE thread_id={message.message_thread_id}")
     activ = cursor.fetchone()
     if activ:
-        cursor.execute(f"SELECT gs_id FROM user_activities WHERE user_id={message.from_user.id} and activity='{activ[0]}'")
+        cursor.execute(f"SELECT gs_id, join_date FROM user_activities WHERE user_id={message.from_user.id} and activity='{activ[0]}'")
         gs_id = cursor.fetchone()
         match = re.search(r'#(\d+)', message.caption)
         number = int(match.group(1))
         if gs_id[0]:
+            if gs_id[1]:
+                cursor.execute(
+                    f"SELECT id,name,nickname,tg_url,timezone,about FROM users WHERE tg_id={message.from_user.id}")
+                info = cursor.fetchone()
+                current_day = datetime.utcnow().date() + timedelta(hours=int(info[4]))
+                current_day_refactored = datetime.strptime(str(current_day), "%Y-%m-%d")
+                cursor.execute(f"UPDATE user_activities SET join_date={current_day_refactored.date()} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+                connect.commit()
             results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                 "valueInputOption": "RAW",
                 "data": [
@@ -87,13 +95,18 @@ async def set_activity(message: types.Message):
                     temp = chr(ord(temp[0]) + 1)
             else:
                 temp = chr(66)
+            cursor.execute(
+                f"SELECT id,name,nickname,tg_url,timezone,about FROM users WHERE tg_id={message.from_user.id}")
+            info = cursor.fetchone()
+            current_day = datetime.utcnow().date() + timedelta(hours=int(info[4]))
+            current_day_refactored = datetime.strptime(str(current_day), "%Y-%m-%d")
             try:
                 if temp != chr(66):
                     cursor.execute(
-                        f"UPDATE user_activities SET gs_id='{temp}', column_id={max_column + 1} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+                        f"UPDATE user_activities SET gs_id='{temp}', column_id={max_column + 1}, join_date={current_day_refactored.date()} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
                 else:
                     cursor.execute(
-                        f"UPDATE user_activities SET gs_id='{temp}', column_id={1} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
+                        f"UPDATE user_activities SET gs_id='{temp}', column_id={1}, join_date={current_day_refactored.date()} WHERE user_id={message.from_user.id} AND activity='{activ[0]}'")
                 connect.commit()
             except Exception as e:
                 print(e)
@@ -110,11 +123,6 @@ async def set_activity(message: types.Message):
                 ]
             }
             rs = service.spreadsheets().batchUpdate(spreadsheetId=activ[3], body=request).execute()
-            cursor.execute(
-                f"SELECT id,name,nickname,tg_url,timezone,about FROM users WHERE tg_id={message.from_user.id}")
-            info = cursor.fetchone()
-            current_day = datetime.utcnow().date() + timedelta(hours=int(info[4]))
-            current_day_refactored = datetime.strptime(str(current_day), "%Y-%m-%d")
             try:
                 results = service.spreadsheets().values().batchUpdate(spreadsheetId=activ[3], body={
                     "valueInputOption": "RAW",
