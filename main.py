@@ -37,11 +37,16 @@ async def set_activity(message: types.Message):
         return
     cursor.execute(f"SELECT activity_type FROM activities WHERE thread_id={message.message_thread_id}")
     activity = cursor.fetchone()[0]
-    cursor.execute(f"SELECT * FROM user_activities WHERE user_id={message.from_user.id} AND activity='{activity}'")
-    if not cursor.fetchone():
+    cursor.execute(f"SELECT status FROM user_activities WHERE user_id={message.from_user.id} AND activity='{activity}'")
+    status = cursor.fetchone()
+    if not status:
         await message.answer("Ты не зарегистрирован в секции, для участия пройди регистрацию по ссылке ниже\n"
                              "https://t.me/upclubot")
         return
+    else:
+        if not status[0]:
+            await message.answer("Ты не зарегистрирован в секции, для участия пройди регистрацию по ссылке ниже\n"
+                                 "https://t.me/upclubot")
     cursor.execute(f"SELECT timezone FROM users WHERE tg_id={message.from_user.id}")
     timezone = cursor.fetchone()
     string_index = 0
@@ -135,8 +140,8 @@ def main():
         executor.start_polling(dp, skip_updates=True)
     except Exception as e:
         # Здесь можно добавить логирование ошибки
-        print(f"An error occurred: {str(e)}")
-        time.sleep(5)
+        print(f"Failed while getting updates: {str(e)}\nBot will restart in 60 seconds")
+        time.sleep(60)
         main()
 
 

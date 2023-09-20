@@ -1,10 +1,10 @@
 import re
-# import psycopg2
-# import pytz
-# from datetime import datetime, timedelta
-# connect = psycopg2.connect(dbname='sportbd', user='postgres',
-#                            password='123321', host='localhost')
-# cursor = connect.cursor()
+import psycopg2
+import pytz
+from datetime import datetime, timedelta
+connect = psycopg2.connect(dbname='sportbd', user='postgres',
+                           password='123321', host='localhost')
+cursor = connect.cursor()
 #
 # from main import service
 # cursor.execute("SELECT DISTINCT activity_type, gid, sp_id, thread_id FROM activities")
@@ -49,14 +49,33 @@ import re
 #             wasted.append(retard)
 #     print(wasted,activity[4])
 
-def trigger(message):
-    if message is not None:
-        print(f"caption message: {message}")
-        if not re.match(r'#\d', message):
-            return
-    else:
-        return
-    print("fine")
+
+# cursor.execute("SELECT join_date FROM user_activities WHERE user_id=503889403")
+# dates = cursor.fetchall()
+# maximum = None
+# today = datetime.today().date()
+# for date in dates:
+#     if date[0]:
+#         picked_date = datetime.strptime(str(date[0]), "%Y-%m-%d") + timedelta(days=21)
+#         if picked_date.date() <= today:
+#             maximum = date
+#
+# if maximum:
+#     print("fine")
 
 
-trigger(None)
+#cursor.execute(f"SELECT status FROM user_activities WHERE activity='приседания' AND column_id = {0 + 1}")
+#if cursor.fetchone()[0]:
+    #print("registered")
+
+# cursor.execute(f"SELECT status FROM user_activities WHERE user_id=503889403 AND activity='приседания'")
+# status = cursor.fetchone()
+# print(status)
+# if not status:
+#         print('worked')
+# else:
+#     if not status[0]:
+#         print("worked 2")
+
+#cursor.execute(f"INSERT INTO user_activities(user_id, activity, join_date) VALUES(503889403, 'отжимания', '{datetime.now(pytz.timezone('Etc/GMT+3')).date()}')")
+#connect.commit()

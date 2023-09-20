@@ -1,4 +1,5 @@
 from aiogram import types
+from datetime import datetime, timedelta
 from db import cursor, connect
 
 
@@ -25,4 +26,15 @@ def get_keyboard(user_id):
         f"SELECT activity_type FROM activities WHERE activity_type NOT IN (SELECT activity FROM user_activities WHERE user_id={user_id})")
     if cursor.fetchone():
         keyboard.inline_keyboard.append([types.InlineKeyboardButton('Записаться на секцию', callback_data='section_register')])
+    cursor.execute(f"SELECT join_date FROM user_activities WHERE user_id={user_id}")
+    dates = cursor.fetchall()
+    can_exit = False
+    today = datetime.today().date()
+    for date in dates:
+        if date[0]:
+            picked_date = datetime.strptime(str(date[0]), "%Y-%m-%d") + timedelta(days=21)
+            if picked_date.date() <= today:
+                can_exit = True
+    if can_exit:
+        keyboard.inline_keyboard.append([types.InlineKeyboardButton('Выйти из секции', callback_data='leave_section')])
     return text, keyboard

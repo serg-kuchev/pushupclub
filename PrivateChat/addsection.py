@@ -38,7 +38,7 @@ async def section_register_back(callback: types.CallbackQuery):
     except Exception as e:
         print(e)
         connect.rollback()
-    await callback.answer("Ты были возвращён в главное меню")
+    await callback.answer("Ты был возвращён в главное меню")
     try:
         await callback.message.delete()
     except:

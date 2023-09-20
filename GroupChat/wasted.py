@@ -39,8 +39,10 @@ async def print_wasted():
             values.append('')
         for z in range(len(values)):
             if values[z] == '':
-                wasted_users.append(w1[z])
-                wasted_users_date.append(user[z])
+                cursor.execute(f"SELECT status FROM user_activities WHERE activity='{activity[0]}' AND column_id = {z + 1}")
+                if cursor.fetchone()[0]:
+                    wasted_users.append(w1[z])
+                    wasted_users_date.append(user[z])
         for x in range(len(wasted_users_date)):
             try:
                 user_refactored = datetime.strptime(wasted_users_date[x], "%d.%m.%Y")
