@@ -1,6 +1,6 @@
 from aiogram.dispatcher.filters import Text
 from PrivateChat.fn import check_timezone
-from datetime import date
+from datetime import date, datetime, timedelta
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -171,3 +171,32 @@ async def edit_about(message: types.Message, state: FSMContext):
         print(e)
         connect.rollback()
     await state.finish()
+
+
+@dp.callback_query_handler(lambda c: c.data == "leave_section")
+async def leave_section(callback: types.CallbackQuery):
+    await callback.answer()
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    cursor.execute(f"SELECT activity, join_date, id FROM user_activities WHERE user_id={callback.message.chat.id}")
+    today = datetime.today().date()
+    for user_date in cursor.fetchall():
+        if user_date[1]:
+            picked_date = datetime.strptime(str(user_date[1]), "%Y-%m-%d") + timedelta(days=21)
+            if picked_date.date() <= today:
+                keyboard.inline_keyboard.append([types.InlineKeyboardButton(f"{user_date[0]}", callback_data=f"leave_section;{user_date[0]};{user_date[2]}")])
+
+    await callback.message.edit_text("Выбери челлендж для выхода", reply_markup=keyboard)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith("leave_section;"))
+async def leave_section_concrete(callback: types.CallbackQuery):
+    section = callback.data.split(";")
+    cursor.execute(f"UPDATE user_activities SET status = {False} WHERE id = {section[2]}")
+    await callback.message.edit_text(f"Вы успешно вышли из челленджа {section[1]}")
+    try:
+        cursor.execute(
+            f"UPDATE users SET menustatus={False}, menumessage = NULL WHERE tg_id={callback.message.chat.id}")
+        connect.commit()
+    except Exception as e:
+        print(e)
+        connect.rollback()
