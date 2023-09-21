@@ -19,6 +19,7 @@ async def print_wasted():
         result = service.spreadsheets().values().get(spreadsheetId=activity[2],
                                                      range=f"Календарь!B5:{maximum}5",).execute()
         w1 = result.get('values')[0]
+        await make_inactive(w1, activity[0], activity[3])
         cursor.execute(f"SELECT str_id FROM activities WHERE activity_type='{activity[0]}'")
         current_str = cursor.fetchone()[0]
         result = service.spreadsheets().values().get(spreadsheetId=activity[2],
@@ -63,3 +64,18 @@ async def increment_activity_str():
     for activity in activities:
         cursor.execute(f"UPDATE activities SET str_id = {activity[1] + 1} WHERE activity_type='{activity[0]}'")
         connect.commit()
+
+
+async def make_inactive(array: list, activity: str, t_id: int):
+    ended_challenge = []
+    for i in range(len(array)):
+        cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_url='{array[i]}'")
+        data = cursor.fetchone()
+        if data[1] is True:
+            if (datetime.utcnow().date() - data[0]).days >= 21:
+                ended_challenge.append('@' + array[i].split('https://t.me/')[1])
+                cursor.execute(f"UPDATE user_activities SET status=FALSE WHERE user_id={data[2]} AND activity='{activity}'")
+                connect.commit()
+    if ended_challenge:
+        ec_join = '\n'.join(ended_challenge)
+        await bot.send_message(-1001665866587, f"Поздравляем! Челлендж {activity} успешно завершили:\n {ec_join}", reply_to_message_id=t_id)
