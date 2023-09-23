@@ -191,11 +191,11 @@ async def leave_section(callback: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data.startswith("leave_section;"))
 async def leave_section_concrete(callback: types.CallbackQuery):
     section = callback.data.split(";")
-    cursor.execute(f"UPDATE user_activities SET status = {False} WHERE id = {section[2]}")
+    cursor.execute(f"UPDATE user_activities SET join_date={None}, status={False} WHERE id = {section[2]}")
     await callback.message.edit_text(f"Вы успешно вышли из челленджа {section[1]}")
     try:
         cursor.execute(
-            f"UPDATE users SET menustatus={False}, menumessage = NULL WHERE tg_id={callback.message.chat.id}")
+            f"UPDATE users SET menustatus={False} menumessage = NULL WHERE tg_id={callback.message.chat.id}")
         connect.commit()
     except Exception as e:
         print(e)

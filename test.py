@@ -81,4 +81,6 @@ cursor = connect.cursor()
 #connect.commit()
 
 
-print(datetime.today().date())
+cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_id=503889403")
+info = cursor.fetchone()
+print(info[0] > 30)

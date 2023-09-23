@@ -25,7 +25,6 @@ async def set_activity(message: types.Message):
     if not message.is_topic_message:
         return
     if message.caption is not None:
-        print(f"caption message: {message.caption}")
         if not re.match(r'#\d', message.caption):
             return
     else:
@@ -62,7 +61,7 @@ async def set_activity(message: types.Message):
         match = re.search(r'#(\d+)', message.caption)
         number = int(match.group(1))
         if gs_id[0]:
-            if gs_id[1]:
+            if gs_id[1] is None:
                 cursor.execute(
                     f"SELECT id,name,nickname,tg_url,timezone,about FROM users WHERE tg_id={message.from_user.id}")
                 info = cursor.fetchone()
