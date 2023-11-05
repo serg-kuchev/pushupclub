@@ -5,7 +5,17 @@ from datetime import datetime, timedelta
 connect = psycopg2.connect(dbname='sportbd', user='postgres',
                            password='123321', host='localhost')
 cursor = connect.cursor()
-#
+def f():
+    from main import service
+    results = service.spreadsheets().values().batchUpdate(spreadsheetId="1URvbiv6YTMUWTOb5Fb8c5Vl46gtiWe1Zgy4H2TtpTrY", body={
+        "valueInputOption": "RAW",
+        "data": [
+            {"range": f"Календарь!C47", 'values': [[25]]}]}).execute()
+
+f()
+
+
+
 # from main import service
 # cursor.execute("SELECT DISTINCT activity_type, gid, sp_id, thread_id FROM activities")
 # activities = [['PUSH UP CLUB', 1283504748, '1FzzvjBymlduQWL8u-PsKlT5kLpFbf4xOSUq7F0KVJoE', 234, 'AC', 57],['PULL UP CLUB', 2005405281, '196QaUYkTD81PhOgmqxcVXj-ZiTTnEXZQMLKl84zoRfc', 234, 'C', 12],['PLANK CLUB', 1350440039, '1PowSwcQkgVHRnYaQ9N3fUUh7_BWf_GdQ_B3tStgTqeQ', 234, 'C', 12],['PRESS', 1273427716, '1vMXgI67PRx1rCO0N1u_Fcp7RC4JRitbzcxGXEUcSla0', 234, 'H', 12]]
@@ -81,6 +91,4 @@ cursor = connect.cursor()
 #connect.commit()
 
 
-cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_id=503889403")
-info = cursor.fetchone()
-print(info[0] > 30)
+print(datetime.today().date())

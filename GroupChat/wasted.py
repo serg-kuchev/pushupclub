@@ -72,8 +72,8 @@ async def make_inactive(array: list, activity: str, t_id: int):
         cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_url='{array[i]}'")
         data = cursor.fetchone()
         if data[1] is True and data[0] is not None:
-            if (datetime.utcnow().date() - data[0]).days >= 21:
+            if (datetime.utcnow().date() - data[0]).days == 21:
                 ended_challenge.append('@' + array[i].split('https://t.me/')[1])
     if ended_challenge:
         ec_join = '\n'.join(ended_challenge)
-        await bot.send_message(-1001665866587, f"Поздравляем! Челлендж {activity} успешно завершили:\n {ec_join}", reply_to_message_id=t_id)
+        await bot.send_message(-1001665866587, f"Поздравляем! Челлендж {activity} успешно завершили:\n {ec_join} \n Вы можете выйти из челленджа через бота или остаться", reply_to_message_id=t_id)
