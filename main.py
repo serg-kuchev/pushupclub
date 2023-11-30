@@ -12,10 +12,10 @@ import pytz
 import re
 import asyncio
 
-# AIzaSyATqFOTz3ToTkDviXZRYu5L58-3mHMoQxI
+
 logging.basicConfig(level=logging.INFO)
-CREDENTIALS_FILE = 'sportbot-396814-5f4c6812d902.json'
-credentials = Credentials.from_service_account_file('sportbot-396814-5f4c6812d902.json', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
+CREDENTIALS_FILE = 'CredFile'
+credentials = Credentials.from_service_account_file('CredFile', scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'])
 service = build('sheets', 'v4', credentials=credentials)
 
 
@@ -77,7 +77,7 @@ async def set_activity(message: types.Message):
             cursor.execute(f"SELECT max(column_id) from user_activities WHERE activity='{activ[0]}'")
             max_column = cursor.fetchone()[0]
             if max_column:
-                cursor.execute( f"SELECT gs_id FROM user_activities WHERE column_id = {max_column} and activity='{activ[0]}' ORDER BY column_id DESC")
+                cursor.execute(f"SELECT gs_id FROM user_activities WHERE column_id = {max_column} and activity='{activ[0]}' ORDER BY column_id DESC")
                 maximum = cursor.fetchone()
             else:
                 maximum = None
