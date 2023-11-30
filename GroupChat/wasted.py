@@ -2,7 +2,7 @@ from dispatcher import bot
 from db import cursor, connect
 from datetime import datetime, timedelta
 import pytz
-
+import gc
 
 async def print_wasted():
     from main import service
@@ -56,6 +56,7 @@ async def print_wasted():
         if wasted:
             wasted_joined = '\n'.join(wasted)
             await bot.send_message(-1001665866587, f"Список Опоздавших в {activity[0]}\n{wasted_joined}", reply_to_message_id=activities[3])
+    gc.collect()
 
 
 async def increment_activity_str():
@@ -64,6 +65,7 @@ async def increment_activity_str():
     for activity in activities:
         cursor.execute(f"UPDATE activities SET str_id = {activity[1] + 1} WHERE activity_type='{activity[0]}'")
         connect.commit()
+    gc.collect()
 
 
 async def make_inactive(array: list, activity: str, t_id: int):
