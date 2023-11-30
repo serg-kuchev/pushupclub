@@ -142,13 +142,14 @@ async def set_activity(message: types.Message):
                         {"range": f"Календарь!{temp[0]}{activ[2] + string_index}", 'values': [[number]]}]}).execute()
 
 
-async def main():
-    await asyncio.sleep(60)
+def main():
     try:
-        executor.start_polling(dp, skip_updates=True, on_shutdown=main())
+        executor.start_polling(dp, skip_updates=True)
     except Exception as e:
         # Здесь можно добавить логирование ошибки
         print(f"Failed while getting updates: {str(e)}\nBot will restart in 60 seconds")
+        time.sleep(60)
+        main()
 
 
 if __name__ == '__main__':
@@ -160,4 +161,4 @@ if __name__ == '__main__':
     scheduler2.add_job(increment_activity_str, trigger='cron', hour=0, minute=0, second=0,
                        start_date=datetime.now(pytz.utc))
     scheduler2.start()
-    executor.start_polling(dp, skip_updates=True, on_shutdown=main)
+    main()

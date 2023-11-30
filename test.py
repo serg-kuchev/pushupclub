@@ -81,10 +81,6 @@ cursor = connect.cursor()
 #connect.commit()
 
 
-# cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_id=503889403")
-# info = cursor.fetchone()
-# print(info[0] > 30)
-
-# today = datetime.today().date()
-# picked_date = datetime.strptime(str("2023-09-09"), "%Y-%m-%d") + timedelta(days=21)
-# print(picked_date.date() <= today)
+cursor.execute(f"SELECT join_date, status, user_id FROM user_activities JOIN users ON user_id=tg_id WHERE tg_id=503889403")
+info = cursor.fetchone()
+print(info[0] > 30)

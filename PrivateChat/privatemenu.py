@@ -3,7 +3,6 @@ from PrivateChat.admin import *
 from PrivateChat.registration import *
 from PrivateChat.addsection import *
 from dispatcher import bot
-import gc
 
 
 @dp.message_handler(lambda c: c.text == "Начать" or c.text == "/start", chat_type='private')
@@ -28,4 +27,3 @@ async def private_start(message: types.Message):
             [types.InlineKeyboardButton('Да', callback_data='register')]
         ])
         await message.answer('Привет !\nХочешь зарегистрироваться в проекте UP CLUB ?', reply_markup=keyboard)
-    gc.collect()
