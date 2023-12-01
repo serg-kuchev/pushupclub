@@ -1,0 +1,12 @@
+**/__pycache__/
+/web/node_modules/*
+/venv/*
+/.idea/*
+default_python/*
+*.pyc
+/web/build
+**/*.log
+_backend_old
+backend/.postgres-data
+backend/monitoring_log
+.env
